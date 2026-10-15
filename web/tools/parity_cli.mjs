@@ -17,6 +17,9 @@
 //               active features as JSON [ids, acts]
 //   attribution [{ids, t, y, window}]  ablation effect of each candidate feature on y's logit at t
 //               (needs sae_dir)
+//   guard       {file, ids: [[ids]], sentences: [[text, i]]}  guard logit at every position, and the
+//               sentence-start rule for (text, index) pairs (needs sae_dir)
+//   guard_bench {file, tokens, repeats}  ms per token: plain step vs step + SAE guard + word check
 // The response is JSON on stdout.
 
 import { createHash } from "node:crypto";
@@ -26,7 +29,8 @@ import { join } from "node:path";
 import { generateIds } from "../engine/generate.js";
 import { GPT } from "../engine/model.js";
 import { ablationEffects } from "../engine/attribution.js";
-import { SAE, steeringHooks, steeringVector } from "../engine/sae.js";
+import { NameGuard, sentenceStart } from "../engine/guard.js";
+import { SAE, featuresForTokens, steeringHooks, steeringVector } from "../engine/sae.js";
 import { mulberry32, sampleToken } from "../engine/sampling.js";
 import { Tokenizer } from "../engine/tokenizer.js";
 
@@ -107,6 +111,38 @@ function features(model, sae, sequences) {
   return { resids, pres, codes };
 }
 
+function guardBench(model, sae, tokenizer, { file, tokens = 200, repeats = 3 }) {
+  const guard = new NameGuard(JSON.parse(readFileSync(file, "utf8")));
+  const rng = mulberry32(2);
+  const ids = Array.from({ length: tokens }, () => Math.floor(rng() * (model.cfg.vocab_size - 1)));
+  const median = (xs) => xs.sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+  const run = (withGuard) => {
+    const cache = model.newCache();
+    let resid = null;
+    const hooks = withGuard ? { [guard.layer]: (x) => (resid = x.slice()) } : null;
+    let flags = 0;
+    const t0 = performance.now();
+    ids.forEach((id, pos) => {
+      model.step(cache, id, true, hooks);
+      if (withGuard) {
+        const codes = pos === 0 ? { ids: [], acts: [] } : sae.encode(resid);
+        if (guard.logit(codes) >= guard.thresholds.balanced) flags++;
+        const text = tokenizer.tokenStr(id);
+        if (guard.wordFlag(text.trim(), sentenceStart(text, 0))) flags++;
+      }
+    });
+    return { ms: (performance.now() - t0) / tokens, flags };
+  };
+  const base = [];
+  const guarded = [];
+  for (let r = 0; r <= repeats; r++) {
+    const b = run(false);
+    const g = run(true);
+    if (r > 0) { base.push(b.ms); guarded.push(g.ms); } // first round is warm-up
+  }
+  return { tokens, repeats, base_ms: median(base), guarded_ms: median(guarded), runtime: `node ${process.version}` };
+}
+
 function main() {
   const req = JSON.parse(readFileSync(process.argv[2], "utf8"));
   const { model, tokenizer } = loadFromDir(req.model_dir);
@@ -137,6 +173,14 @@ function main() {
   if (req.attribution) {
     res.attribution = req.attribution.map(({ ids, t, y, window }) => ablationEffects(model, sae, ids, t, y, window));
   }
+  if (req.guard) {
+    const guard = new NameGuard(JSON.parse(readFileSync(req.guard.file, "utf8")));
+    res.guard = {
+      logits: req.guard.ids.map((ids) => featuresForTokens(model, sae, ids).map((c) => guard.logit(c))),
+      sentence_start: req.guard.sentences.map(([text, i]) => sentenceStart(text, i)),
+    };
+  }
+  if (req.guard_bench) res.guard_bench = guardBench(model, sae, tokenizer, req.guard_bench);
   if (req.features) {
     const out = features(model, sae, req.features);
     writeFloat32(req.resid_out, out.resids);

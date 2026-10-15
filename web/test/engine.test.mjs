@@ -242,3 +242,20 @@ test("steering applies at positions >= 1 and survives context restarts", () => {
   assert.deepEqual(steered, naiveGreedy(model, [1, 2, 3], 30, hooks));
   assert.notDeepEqual(steered, generateIds(model, [1, 2, 3], { maxNewTokens: 30, temperature: 0 }));
 });
+
+test("name guard: logit, explanation and word check", async () => {
+  const { NameGuard, sentenceStart } = await import("../engine/guard.js");
+  const guard = new NameGuard({
+    format: "glassbox-guard", layer: 1, bias: -1, threshold: 0, strict_threshold: -0.5,
+    weights: [0.5, -2, 1.5], names: ["Lily"], exclude: ["I", "Mom"], labels: { 2: '" named"' },
+  });
+  const codes = { ids: Int32Array.of(0, 2, 1), acts: Float32Array.of(2, 1, 0.5) };
+  assert.equal(guard.logit(codes), -1 + 1 + 1.5 - 1);
+  assert.deepEqual(guard.explain(codes).map((p) => p.feature), [2, 0]);
+  assert.equal(guard.explain(codes)[0].label, '" named"');
+  assert.ok(guard.wordFlag("Lily", true));
+  assert.ok(guard.wordFlag("Zed", false) && !guard.wordFlag("Zed", true));
+  assert.ok(!guard.wordFlag("Mom", false) && !guard.wordFlag("cat", false) && !guard.wordFlag("", false));
+  const t = 'Tom said, "Look at Sam!" Then';
+  assert.deepEqual(["Tom", "Look", "Sam", "Then"].map((w) => sentenceStart(t, t.indexOf(w))), [true, true, false, true]);
+});

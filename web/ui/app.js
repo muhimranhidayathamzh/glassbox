@@ -1,4 +1,5 @@
 import { generateIds, generateTokens } from "../engine/generate.js";
+import { NameGuard, sentenceStart } from "../engine/guard.js";
 import { loadModel, loadSAE } from "../engine/load.js";
 import { steeringHooks, steeringVector } from "../engine/sae.js";
 import { topTokens } from "../engine/sampling.js";
@@ -14,8 +15,7 @@ const EXAMPLES = [
 ];
 
 let engine = null;
-let steering = null; // {sae, steering} once loaded
-let steeringLoad = null;
+let saeLoad = null; // Promise of {sae, steering, guard, nameGuard}
 let running = false;
 let stopRequested = false;
 
@@ -43,12 +43,12 @@ function tokenTitle(tokenizer, id, prob, modelProbs) {
   return lines.join("\n");
 }
 
-/** Load the SAE and the steering presets the first time they are needed. */
-function ensureSteering() {
-  steeringLoad ??= loadSAE(new URL("../model/sae/", import.meta.url), engine.manifest, null,
-                           { features: false, steering: true })
+/** Load the SAE, the steering presets and the name guard the first time one of them is needed. */
+function ensureSAE() {
+  saeLoad ??= loadSAE(new URL("../model/sae/", import.meta.url), engine.manifest, null,
+                      { features: false, steering: true, guard: true })
     .then((s) => {
-      steering = s;
+      s.nameGuard = new NameGuard(s.guard);
       $("steer-layer").textContent = String(s.steering.layer);
       const select = $("steer-feature");
       for (const p of s.steering.presets) {
@@ -56,20 +56,112 @@ function ensureSteering() {
       }
       return s;
     });
-  return steeringLoad;
+  return saeLoad;
 }
 
-/** Steering hooks for the current controls, or null when steering is off. */
+/** Steering for the current controls, or null when steering is off. */
 async function currentSteering() {
   const feature = $("steer-feature").value;
   const alpha = Number($("steer-alpha").value);
   if (feature === "" || alpha === 0) return null;
-  const { sae, steering: cfg } = await ensureSteering();
+  const { sae, steering: cfg } = await ensureSAE();
   const preset = cfg.presets.find((p) => String(p.feature) === feature);
   return {
+    layer: cfg.layer,
     hooks: steeringHooks(cfg.layer, steeringVector(sae, Number(feature), alpha * cfg.resid_norm)),
     note: `steered toward "${preset.word}" (feature #${feature}) at strength ${alpha}`,
   };
+}
+
+/** Name-guard state for the current controls, or null when the guard is off. */
+async function currentGuard() {
+  const mode = $("guard-mode").value;
+  if (mode === "off") return null;
+  const { sae, nameGuard } = await ensureSAE();
+  return { sae, guard: nameGuard, mode, threshold: nameGuard.thresholds[mode], wordCheck: $("guard-word").checked,
+           resid: null, pos: 0 };
+}
+
+/** One hook at the SAE layer that steers (if on) and then records the residual for the guard. */
+function combinedHooks(steer, guardState) {
+  if (!steer && !guardState) return null;
+  const layer = guardState ? guardState.guard.layer : steer.layer;
+  return {
+    [layer]: (x, pos) => {
+      steer?.hooks[layer]?.(x, pos);
+      if (guardState) {
+        guardState.resid = x.slice();
+        guardState.pos = pos;
+      }
+    },
+  };
+}
+
+function tokenSpan(text, ev, tokenizer) {
+  const span = document.createElement("span");
+  span.className = "tok";
+  span.textContent = text;
+  span.style.setProperty("--surprise", (1 - ev.prob).toFixed(3));
+  span.title = tokenTitle(tokenizer, ev.id, ev.prob, ev.modelProbs);
+  return span;
+}
+
+/**
+ * Holds tokens until their word is complete, then shows the word or hides it. A word is hidden when
+ * the guard predicted, before its first token was chosen, that a name was coming; or, with the word
+ * check on, when the finished word is a known name or capitalized mid-sentence.
+ */
+class WordGate {
+  constructor(out, tokenizer, g, context) {
+    Object.assign(this, { out, tokenizer, g, raw: context, pending: [] });
+    this.hidden = { before: 0, word: 0, both: 0 };
+  }
+
+  push(ev, decision) {
+    const text = this.tokenizer.tokenStr(ev.id);
+    const continues = this.pending.length && /^[A-Za-z]/.test(text) && /[A-Za-z]$/.test(this.pending.at(-1).text);
+    if (!continues) this.flush();
+    this.pending.push({ ev, text, ...decision });
+  }
+
+  flush() {
+    if (!this.pending.length) return;
+    const text = this.pending.map((p) => p.text).join("");
+    const lead = text.match(/^[\s"']*/)[0];
+    const word = (/^[A-Za-z]+/.exec(text.slice(lead.length)) ?? [""])[0];
+    const atStart = sentenceStart(this.raw + text, this.raw.length + lead.length);
+    const before = this.pending[0].flagged;
+    const byWord = this.g.wordCheck && this.g.guard.wordFlag(word, atStart);
+    if (before || byWord) {
+      this.hidden[before && byWord ? "both" : before ? "before" : "word"]++;
+      const span = document.createElement("span");
+      span.className = "redacted";
+      span.textContent = lead + "█".repeat(Math.max(1, text.length - lead.length));
+      const reasons = [];
+      if (before) {
+        const why = this.pending[0].explain
+          .map((e) => `#${e.feature}${e.label ? ` ${e.label}` : ""} (+${e.contribution.toFixed(2)})`).join(", ");
+        reasons.push(`Predicted before it was written (score ${this.pending[0].logit.toFixed(2)} >= ` +
+                     `${this.g.threshold.toFixed(2)})${why ? `; strongest features: ${why}` : ""}`);
+      }
+      if (byWord) {
+        reasons.push(`Word check: "${word}" ${this.g.guard.names.has(word) ? "is in the name list" : "is capitalized mid-sentence"}`);
+      }
+      span.title = `Hidden: ${quote(text.slice(lead.length))}\n${reasons.join("\n")}`;
+      this.out.append(span);
+    } else {
+      for (const p of this.pending) this.out.append(tokenSpan(p.text, p.ev, this.tokenizer));
+    }
+    this.raw += text;
+    this.pending = [];
+  }
+
+  summary() {
+    const { before, word, both } = this.hidden;
+    const n = before + word + both;
+    return `name guard (${this.g.mode}) hid ${n} word${n === 1 ? "" : "s"}: ${before + both} predicted before ` +
+      `they were written, ${word + both} by the word check (${both} by both)`;
+  }
 }
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -93,12 +185,14 @@ async function generate() {
     stopToken: tokenizer.eotId,
   };
   let steer = null;
+  let g = null;
   try {
     steer = await currentSteering();
+    g = await currentGuard();
   } catch (err) {
-    setStatus(`Steering unavailable: ${err.message}`, true);
+    setStatus(`Steering / name guard unavailable: ${err.message}`, true);
   }
-  if (steer) opts.hooks = steer.hooks;
+  opts.hooks = combinedHooks(steer, g);
 
   const out = $("output");
   out.replaceChildren();
@@ -108,6 +202,7 @@ async function generate() {
     p.textContent = promptText;
     out.append(p);
   }
+  const gate = g ? new WordGate(out, tokenizer, g, promptText) : null;
 
   const decoder = new TextDecoder();
   const t0 = performance.now();
@@ -118,37 +213,39 @@ async function generate() {
     for (const ev of generateTokens(model, ids, opts)) {
       if (stopRequested) break;
       if (ev.type === "prefill") {
-        setStatus(`Reading prompt\u2026 ${ev.done}/${ev.total} tokens`);
+        setStatus(`Reading prompt… ${ev.done}/${ev.total} tokens`);
       } else {
         count++;
         if (ev.id === tokenizer.eotId) {
           ended = true;
+          gate?.flush();
           const end = document.createElement("span");
           end.className = "end";
           end.textContent = "end of story";
           out.append(end);
+        } else if (gate) {
+          // The guard reads the position whose logits produced this token, i.e. before it was chosen.
+          const codes = g.pos === 0 ? { ids: [], acts: [] } : g.sae.encode(g.resid);
+          const logit = g.guard.logit(codes);
+          gate.push(ev, { logit, flagged: logit >= g.threshold, explain: g.guard.explain(codes) });
         } else {
-          const span = document.createElement("span");
-          span.className = "tok";
-          span.textContent = decoder.decode(tokenizer.vocab[ev.id], { stream: true });
-          span.style.setProperty("--surprise", (1 - ev.prob).toFixed(3));
-          span.title = tokenTitle(tokenizer, ev.id, ev.prob, ev.modelProbs);
-          out.append(span);
+          out.append(tokenSpan(decoder.decode(tokenizer.vocab[ev.id], { stream: true }), ev, tokenizer));
         }
-        setStatus("Generating\u2026");
+        setStatus("Generating…");
       }
       if (performance.now() - lastFrame > 30) {
         await nextFrame(); // let the page render and react to Stop
         lastFrame = performance.now();
       }
     }
+    gate?.flush();
     const tail = decoder.decode();
     if (tail) out.append(tail);
     const seconds = (performance.now() - t0) / 1000;
     const why = (stopRequested ? "stopped" : ended ? "model ended the story" : "reached max tokens") +
-      (steer ? ` \u00b7 ${steer.note}` : "");
+      (steer ? ` · ${steer.note}` : "") + (gate ? ` · ${gate.summary()}` : "");
     const rate = seconds > 0.01 ? ` (${(count / seconds).toFixed(0)} tokens/s)` : "";
-    $("stats").textContent = `${count} tokens in ${seconds.toFixed(2)} s${rate} \u00b7 ${why}`;
+    $("stats").textContent = `${count} tokens in ${seconds.toFixed(2)} s${rate} · ${why}`;
     setStatus("Ready.");
   } catch (err) {
     setStatus(`Error: ${err.message}`, true);
@@ -191,7 +288,8 @@ async function init() {
     $("examples").append(chip);
   }
 
-  // Shareable settings: ?prompt=...&temperature=0.8&topk=50&maxtok=208&seed=3&steer=819&alpha=0.5&tokens&run
+  // Shareable settings: ?prompt=...&temperature=0.8&topk=50&maxtok=208&seed=3&steer=819&alpha=0.5
+  //                     &guard=balanced&guardword=0&tokens&run
   const params = new URLSearchParams(location.search);
   if (params.has("prompt")) $("prompt").value = params.get("prompt");
   if (params.has("alpha")) params.set("steer-alpha", params.get("alpha"));
@@ -224,13 +322,21 @@ async function init() {
     $("generate").disabled = false;
     $("generate").textContent = "Generate";
     if (selftestMode) selftest();
-    $("steer-panel").addEventListener("toggle", () => {
-      if ($("steer-panel").open) ensureSteering().catch((err) => setStatus(`Steering unavailable: ${err.message}`, true));
-    });
+    for (const panel of ["steer-panel", "guard-panel"]) {
+      $(panel).addEventListener("toggle", () => {
+        if ($(panel).open) ensureSAE().catch((err) => setStatus(`SAE unavailable: ${err.message}`, true));
+      });
+    }
     if (params.has("steer")) {
       $("steer-panel").open = true;
-      await ensureSteering();
+      await ensureSAE();
       $("steer-feature").value = params.get("steer");
+    }
+    // ?guard=balanced|strict, &guardword=0 to switch the word check off
+    if (["balanced", "strict"].includes(params.get("guard"))) {
+      $("guard-panel").open = true;
+      $("guard-mode").value = params.get("guard");
+      $("guard-word").checked = params.get("guardword") !== "0";
     }
     if (params.has("run")) await generate();
   } catch (err) {

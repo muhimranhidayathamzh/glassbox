@@ -795,3 +795,11 @@ input[type="range"]#ckpt {
   align-items: center;
   gap: 2px;
 }
+
+/* ---------- name guard ---------- */
+
+.story .redacted {
+  color: var(--muted);
+  letter-spacing: -0.05em;
+  cursor: help;
+}

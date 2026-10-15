@@ -10,6 +10,7 @@ Status:
 - **Milestone 4** (steering + attribution) done:
   [results/steering.md](results/steering.md), [results/attribution.md](results/attribution.md)
 - **Milestone 5** (training replay + induction heads) done: [results/induction.md](results/induction.md)
+- **Milestone 6** (name guard) done: [results/guard.md](results/guard.md)
 
 Every number in `results/` is written by a script; none are typed by hand.
 
@@ -23,7 +24,9 @@ python -m http.server 8000 -d web
 # open http://localhost:8000 (generate), /microscope.html (SAE features), /replay.html (training replay)
 ```
 
-- **Generate**: write a story; open *Steering* to push it toward a concept with an SAE feature.
+- **Generate**: write a story; open *Steering* to push it toward a concept with an SAE feature, or
+  *Name guard* to hide names: a classifier on SAE features predicts a name before the token is chosen,
+  and an optional word check catches known and mid-sentence capitalized names.
 - **Microscope**: type text, click a token to see the features active on it and a circuit graph of the
   features that led the model to write it (computed by ablation in the browser).
 - **Replay**: slide through the checkpoints saved during training: loss curves, induction and
@@ -87,6 +90,12 @@ python -m glassbox.attribution     # DLA and gradient estimates vs ablation -> r
 python -m glassbox.induction       # all checkpoints -> results/induction.*, web/model/replay.json
 ```
 
+## Reproduce milestone 6: name guard
+
+```bash
+python -m glassbox.guard           # regex, classifiers, SAE guard -> results/guard.*, web/model/sae/guard.json
+```
+
 ## Tests
 
 ```bash
@@ -116,12 +125,13 @@ python/glassbox/
   steer.py         steering with feature directions, benchmark against random directions
   attribution.py   feature attribution (DLA, gradient x activation) validated by ablation
   induction.py     induction / previous-token head scores per checkpoint, probes and controls
+  guard.py         labelled name data, regex / classifier / SAE-feature name guards, benchmark
   eval/lm_eval.py      val loss vs uniform/unigram/bigram baselines, loss curve, samples
   eval/web_parity.py   JS engine vs PyTorch: logits, tokenizer, greedy generation, speed
   eval/sae_eval.py     SAE variance explained, L0, dead features, loss when spliced in; PCA baselines
 web/
   engine/          JS inference: tokenizer, forward pass with KV cache and residual hooks, SAE,
-                   steering, ablation-based attribution, sampling
+                   steering, ablation-based attribution, name guard, sampling
   ui/              page logic and styles (index.html, microscope.html, replay.html)
   model/           exported model served to the browser
   test/            JS unit tests (node --test)

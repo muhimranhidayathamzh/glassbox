@@ -56,6 +56,24 @@
         </div>
       </details>
 
+      <details class="steer" id="guard-panel">
+        <summary>Name guard</summary>
+        <p class="hint">Hide names before they are shown. Before each token is chosen, a classifier reads the
+          model's sparse-autoencoder features and predicts whether a name comes next; once a word is complete, an
+          optional word check also hides known names and capitalized words in mid-sentence. Hover a hidden word
+          to see why. Measured precision, recall and cost: <code>results/guard.md</code>.</p>
+        <div class="sliders">
+          <label>Mode
+            <select id="guard-mode">
+              <option value="off">off</option>
+              <option value="balanced">balanced (best F1)</option>
+              <option value="strict">strict (catches more names, hides more words)</option>
+            </select>
+          </label>
+          <label class="toggle"><input type="checkbox" id="guard-word" checked> also check finished words</label>
+        </div>
+      </details>
+
       <div class="actions">
         <button id="generate" class="primary" disabled>Loading model&hellip;</button>
         <button id="stop" hidden>Stop</button>

@@ -195,3 +195,53 @@ def test_shipped_steering_and_attribution_parity():
     _, tok, _ = load_exported(SHIPPED)
     ids = [tok.eot_id] + tok.encode("Once upon a time, there was a little girl named Lily. She liked to play")
     check_steering_and_attribution_parity(SHIPPED, SHIPPED_SAE, ids, n_greedy=300, coef=6.0)
+
+
+SENTENCE_CASES = 'Lily ran. Tom said, "Look at Sam!" Then Ben came.\n"Hi!" said Mia. \'Oh\' and Zed'
+
+
+def check_guard_parity(model_dir: Path, sae_dir: Path, guard_file: Path, seqs: list[list[int]]) -> None:
+    import json
+    import re
+
+    from glassbox.guard import sentence_start
+
+    model, _, _ = load_exported(model_dir)
+    sae, _ = load_exported_sae(sae_dir)
+    guard = json.loads(guard_file.read_text(encoding="utf-8"))
+    cases = [[SENTENCE_CASES, m.start()] for m in re.finditer(r"[A-Za-z]+", SENTENCE_CASES)]
+    res, _ = run_node({"model_dir": model_dir, "sae_dir": sae_dir,
+                       "guard": {"file": str(guard_file.resolve()), "ids": seqs, "sentences": cases}})
+    assert res["guard"]["sentence_start"] == [sentence_start(t, i) for t, i in cases]
+    w = torch.tensor(guard["weights"])
+    differing = total = 0
+    for ids, js in zip(seqs, res["guard"]["logits"]):
+        with torch.no_grad():
+            codes = sae.encode(model.resid_at(torch.tensor([ids]), sae.cfg.layer))[0]
+        codes[0] = 0
+        py = (codes @ w + guard["bias"]).numpy()
+        diff = np.abs(np.array(js) - py)
+        differing += int((diff > SAE_PARITY_MAX_ABS_DIFF).sum())  # only where top-k nearly ties
+        total += len(ids)
+        assert np.median(diff) < 1e-5
+    assert differing <= 0.02 * total
+
+
+def test_tiny_guard_parity(tiny_export, tmp_path):
+    import json
+
+    rng = np.random.default_rng(4)
+    guard = {"format": "glassbox-guard", "version": 1, "layer": 1, "bias": 0.3, "threshold": 0.0,
+             "strict_threshold": -1.0, "weights": rng.normal(size=96).round(5).tolist(),
+             "names": ["Lily"], "exclude": ["I"], "labels": {}}
+    path = tmp_path / "guard.json"
+    path.write_text(json.dumps(guard))
+    check_guard_parity(tiny_export, tiny_export / "sae", path, [rng.integers(0, 299, 30).tolist()])
+
+
+@pytest.mark.skipif(not (SHIPPED_SAE / "guard.json").exists(), reason="run python -m glassbox.guard")
+def test_shipped_guard_parity():
+    _, tok, _ = load_exported(SHIPPED)
+    ids = [tok.eot_id] + tok.encode('Once upon a time, there was a girl named Lily. "Hi, Tom!" said Lily. '
+                                    "Tom and Lily played in the park with Max.")
+    check_guard_parity(SHIPPED, SHIPPED_SAE, SHIPPED_SAE / "guard.json", [ids])

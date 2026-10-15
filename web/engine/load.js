@@ -53,15 +53,17 @@ export async function loadModel(baseUrl, onProgress) {
 
 /**
  * Load an exported SAE plus the requested companion files (features.json from features.py,
- * steering.json from steer.py). Refuses files made for a different model or SAE.
+ * steering.json from steer.py, guard.json from guard.py). Refuses files made for a different
+ * model or SAE.
  */
-export async function loadSAE(baseUrl, modelManifest, onProgress, { features = true, steering = false } = {}) {
+export async function loadSAE(baseUrl, modelManifest, onProgress,
+                              { features = true, steering = false, guard = false } = {}) {
   const { base, manifest, buffer } = await loadExport(baseUrl, onProgress);
   if (manifest.model_weights_sha256 !== modelManifest.weights_sha256) {
     throw new Error("this SAE was exported for a different model");
   }
   const out = { sae: SAE.fromBuffers(manifest, buffer), manifest };
-  for (const [name, wanted] of [["features", features], ["steering", steering]]) {
+  for (const [name, wanted] of [["features", features], ["steering", steering], ["guard", guard]]) {
     if (!wanted) continue;
     const json = await (await fetchOk(new URL(`${name}.json`, base))).json();
     if (json.sae_weights_sha256 !== manifest.weights_sha256) {
