@@ -8,12 +8,13 @@ import { mulberry32, sampleToken } from "./sampling.js";
  * Generate up to maxNewTokens after promptIds. Yields events:
  *   {type: "prefill", done, total}                    progress while reading the prompt
  *   {type: "token", id, prob, modelProbs, rebuilt}    one generated token
- * Stops early after emitting stopToken (if given).
+ * Stops early after emitting stopToken (if given). hooks ({layer: fn(x, pos)}) are applied at every
+ * step, e.g. to steer; pos is the position in the current window, as in Python.
  */
 export function* generateTokens(
   model,
   promptIds,
-  { maxNewTokens = 200, temperature = 0.8, topK = 50, seed = 0, stopToken = undefined } = {},
+  { maxNewTokens = 200, temperature = 0.8, topK = 50, seed = 0, stopToken = undefined, hooks = null } = {},
 ) {
   if (!promptIds.length) throw new Error("prompt must contain at least one token");
   const nCtx = model.cfg.n_ctx;
@@ -28,7 +29,7 @@ export function* generateTokens(
     let logits = null;
     const total = tokens.length - start;
     for (let i = start; i < tokens.length; i++) {
-      logits = model.step(cache, tokens[i], i === tokens.length - 1);
+      logits = model.step(cache, tokens[i], i === tokens.length - 1, hooks);
       const done = i - start + 1;
       if (done % 32 === 0 && done < total) yield { type: "prefill", done, total };
     }
@@ -48,7 +49,7 @@ export function* generateTokens(
       start = tokens.length - keep;
       logits = yield* rebuild();
     } else {
-      logits = model.step(cache, id, true);
+      logits = model.step(cache, id, true, hooks);
     }
   }
 }

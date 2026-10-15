@@ -40,6 +40,22 @@
         </label>
       </div>
 
+      <details class="steer" id="steer-panel">
+        <summary>Steering (experimental)</summary>
+        <p class="hint">Push the story toward a concept: while the model writes, the direction of one sparse
+          autoencoder feature is added to its internal state (the residual stream at layer
+          <span id="steer-layer">2</span>). Strength 1 adds a vector as large as a typical internal state; large
+          values break the text. Measured effects: <code>results/steering.md</code>.</p>
+        <div class="sliders">
+          <label>Concept
+            <select id="steer-feature"><option value="">off</option></select>
+          </label>
+          <label>Strength <output id="steer-alpha-out"></output>
+            <input type="range" id="steer-alpha" min="0" max="4" step="0.25" value="0.5">
+          </label>
+        </div>
+      </details>
+
       <div class="actions">
         <button id="generate" class="primary" disabled>Loading model&hellip;</button>
         <button id="stop" hidden>Stop</button>

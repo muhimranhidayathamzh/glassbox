@@ -82,3 +82,28 @@ export function featuresForTokens(model, sae, tokenIds) {
     return codes;
   });
 }
+
+/** What one unit of feature f adds to the residual stream: W_dec[f] / scale (as in attribution.py). */
+export function featureVector(sae, f) {
+  const d = sae.cfg.d_in;
+  const out = new Float32Array(d);
+  for (let i = 0; i < d; i++) out[i] = sae.W_dec[f * d + i] / sae.cfg.scale;
+  return out;
+}
+
+/** coef times the unit vector along feature f's decoder direction (as in steer.py). */
+export function steeringVector(sae, f, coef) {
+  const v = featureVector(sae, f);
+  const norm = Math.hypot(...v);
+  return v.map((x) => (coef * x) / norm);
+}
+
+/** Hooks that add vec to the residual stream entering block `layer`, at positions >= 1. */
+export function steeringHooks(layer, vec) {
+  return {
+    [layer]: (x, pos) => {
+      if (pos === 0) return;
+      for (let i = 0; i < x.length; i++) x[i] += vec[i];
+    },
+  };
+}

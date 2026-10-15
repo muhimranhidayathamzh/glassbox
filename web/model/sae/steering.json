@@ -1,0 +1,45 @@
+{
+ "format": "glassbox-steering",
+ "version": 1,
+ "layer": 2,
+ "resid_norm": 19.528839111328125,
+ "sae_weights_sha256": "4620ce59b4d29f2ac1c45169f4d1776cddadc0c63e8f292d2e54d4fa0f70a539",
+ "max_alpha": 4.0,
+ "presets": [
+  {
+   "word": "ball",
+   "feature": 819,
+   "label": "\" ball\""
+  },
+  {
+   "word": "dog",
+   "feature": 461,
+   "label": "\" dog\""
+  },
+  {
+   "word": "cat",
+   "feature": 1931,
+   "label": "\" cat\""
+  },
+  {
+   "word": "tree",
+   "feature": 606,
+   "label": "\" tree\""
+  },
+  {
+   "word": "cake",
+   "feature": 731,
+   "label": "\" cake\""
+  },
+  {
+   "word": "car",
+   "feature": 990,
+   "label": "\" car\""
+  },
+  {
+   "word": "flower",
+   "feature": 1699,
+   "label": "\" flower\""
+  }
+ ]
+}

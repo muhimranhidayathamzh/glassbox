@@ -438,3 +438,78 @@ code {
   font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
   font-size: 0.9em;
 }
+
+/* ---------- steering ---------- */
+
+.steer {
+  margin: 4px 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.steer summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.steer select {
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+/* ---------- circuit graph ---------- */
+
+.circuit-graph svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.circuit text {
+  fill: var(--fg);
+  font: 13px ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+.circuit .node-effect {
+  fill: var(--muted);
+}
+
+.circuit .node-feature rect {
+  fill: var(--bg);
+  stroke: var(--border);
+}
+
+.circuit .node-feature {
+  cursor: pointer;
+}
+
+.circuit .node-feature:hover rect,
+.circuit .node-feature:focus rect {
+  stroke: var(--accent);
+}
+
+.circuit .node-target rect {
+  fill: var(--bg);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.circuit .edge-active {
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.circuit .edge-plus {
+  stroke: var(--accent);
+  stroke-opacity: 0.75;
+}
+
+.circuit .edge-minus {
+  stroke: #d9534f;
+  stroke-opacity: 0.75;
+}

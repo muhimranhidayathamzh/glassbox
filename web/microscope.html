@@ -44,6 +44,16 @@
       </section>
     </div>
 
+    <section class="panel" id="circuit" hidden>
+      <h2 id="circuit-title"></h2>
+      <p id="circuit-meta" class="hint"></p>
+      <div id="circuit-graph" class="circuit-graph"></div>
+      <p class="legend">Each feature is removed in turn (its contribution subtracted from the internal state at its
+        position) and the model is rerun: a blue edge means the token's score drops without the feature (it
+        supported the token), red means it rises. Edge width is the size of that change. Grey edges show which
+        token each feature was active on. Click a feature to inspect it.</p>
+    </section>
+
     <section class="panel" id="feature" hidden>
       <h2 id="feature-title"></h2>
       <p id="feature-meta" class="hint"></p>

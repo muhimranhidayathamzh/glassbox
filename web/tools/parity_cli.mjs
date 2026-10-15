@@ -7,12 +7,16 @@
 //   logits_out  path for those logits
 //   encode      [text]   token ids, special tokens allowed
 //   decode      [[ids]]  text
-//   greedy      [{prompt: [ids], n}]  greedy continuation, same context rule as Python
+//   greedy      [{prompt: [ids], n, steer?: {feature, coef}}]  greedy continuation, same context
+//               rule as Python; with steer, coef * unit(W_dec[feature]) is added at the SAE's layer
+//               at positions >= 1 (needs sae_dir)
 //   bench       {prompt_tokens, new_tokens, repeats}  tokens/s for prefill and generation
 //   sae_dir     directory with an exported SAE (needed by `features`)
 //   features    [[ids]]  at every position: the residual stream entering the SAE's layer
 //               (float32 to resid_out), the SAE pre-activations (float32 to pre_out), and the
 //               active features as JSON [ids, acts]
+//   attribution [{ids, t, y, window}]  ablation effect of each candidate feature on y's logit at t
+//               (needs sae_dir)
 // The response is JSON on stdout.
 
 import { createHash } from "node:crypto";
@@ -21,7 +25,8 @@ import { join } from "node:path";
 
 import { generateIds } from "../engine/generate.js";
 import { GPT } from "../engine/model.js";
-import { SAE } from "../engine/sae.js";
+import { ablationEffects } from "../engine/attribution.js";
+import { SAE, steeringHooks, steeringVector } from "../engine/sae.js";
 import { mulberry32, sampleToken } from "../engine/sampling.js";
 import { Tokenizer } from "../engine/tokenizer.js";
 
@@ -117,15 +122,23 @@ function main() {
   }
   if (req.encode) res.encoded = req.encode.map((t) => tokenizer.encode(t));
   if (req.decode) res.decoded = req.decode.map((ids) => tokenizer.decode(ids));
+  let sae = null;
+  if (req.sae_dir) {
+    const { manifest, buffer } = readExport(req.sae_dir);
+    sae = SAE.fromBuffers(manifest, buffer);
+  }
   if (req.greedy) {
-    res.greedy = req.greedy.map(({ prompt, n }) =>
-      generateIds(model, prompt, { maxNewTokens: n, temperature: 0 }),
-    );
+    res.greedy = req.greedy.map(({ prompt, n, steer }) => {
+      const hooks = steer ? steeringHooks(sae.cfg.layer, steeringVector(sae, steer.feature, steer.coef)) : null;
+      return generateIds(model, prompt, { maxNewTokens: n, temperature: 0, hooks });
+    });
   }
   if (req.bench) res.bench = bench(model, req.bench);
+  if (req.attribution) {
+    res.attribution = req.attribution.map(({ ids, t, y, window }) => ablationEffects(model, sae, ids, t, y, window));
+  }
   if (req.features) {
-    const { manifest, buffer } = readExport(req.sae_dir);
-    const out = features(model, SAE.fromBuffers(manifest, buffer), req.features);
+    const out = features(model, sae, req.features);
     writeFloat32(req.resid_out, out.resids);
     writeFloat32(req.pre_out, out.pres);
     res.codes = out.codes;

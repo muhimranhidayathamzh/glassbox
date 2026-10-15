@@ -87,6 +87,18 @@ export class GPT {
     };
   }
 
+  /** Copy of the cache keeping only the first len positions (they do not depend on later ones). */
+  cloneCache(cache, len = cache.len) {
+    const d = this.cfg.d_model;
+    const copy = this.newCache();
+    for (let l = 0; l < this.blocks.length; l++) {
+      copy.k[l].set(cache.k[l].subarray(0, len * d));
+      copy.v[l].set(cache.v[l].subarray(0, len * d));
+    }
+    copy.len = len;
+    return copy;
+  }
+
   /**
    * Feed one token at position cache.len. Returns the next-token logits (a new Float32Array)
    * when wantLogits is true, otherwise null (saves the unembedding during prompt prefill).

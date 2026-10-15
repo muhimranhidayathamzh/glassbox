@@ -1,3 +1,4 @@
+import { ablationEffects } from "../engine/attribution.js";
 import { loadModel, loadSAE } from "../engine/load.js";
 import { featuresForTokens } from "../engine/sae.js";
 
@@ -211,6 +212,101 @@ function renderFeature() {
   }
 }
 
+const SVG = "http://www.w3.org/2000/svg";
+const CIRCUIT_WINDOW = 8;
+const CIRCUIT_FEATURES = 8;
+
+function svg(tag, attrs, text) {
+  const el = document.createElementNS(SVG, tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+
+function clip(s, n) {
+  return s.length > n ? `${s.slice(0, n - 1)}\u2026` : s;
+}
+
+function drawCircuit(q, result) {
+  const { effects, prob } = result;
+  const top = [...effects].sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect)).slice(0, CIRCUIT_FEATURES);
+  const positions = [...new Set(top.map((e) => e.pos))].sort((a, b) => a - b);
+  const rowH = 34;
+  const rows = Math.max(positions.length, top.length, 1);
+  const H = rows * rowH + 16;
+  const W = 760;
+  const yOf = (i, n) => 8 + (H - 16) * (i + 0.5) / n;
+  const graph = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "circuit", role: "img",
+                             "aria-label": "Features that led to the selected token" });
+  const maxEffect = Math.max(...top.map((e) => Math.abs(e.effect)), 1e-9);
+  const tokenY = new Map(positions.map((p, i) => [p, yOf(i, positions.length)]));
+  const targetY = H / 2;
+  top.forEach((e, i) => {
+    const fy = yOf(i, top.length);
+    graph.append(svg("line", { x1: 170, y1: tokenY.get(e.pos), x2: 232, y2: fy, class: "edge-active" }));
+    graph.append(svg("line", { x1: 560, y1: fy, x2: 628, y2: targetY,
+                               class: e.effect >= 0 ? "edge-plus" : "edge-minus",
+                               "stroke-width": (1 + 7 * Math.abs(e.effect) / maxEffect).toFixed(2) }));
+  });
+  for (const p of positions) {
+    graph.append(svg("text", { x: 164, y: tokenY.get(p) + 5, "text-anchor": "end", class: "node-token" },
+                     `${clip(JSON.stringify(tokenizer.tokenStr(analysis.ids[p])), 14)} @${p}`));
+  }
+  top.forEach((e, i) => {
+    const fy = yOf(i, top.length);
+    const info = features.features[e.feature];
+    const g = svg("g", { class: "node-feature", tabindex: 0, role: "button" });
+    g.append(svg("rect", { x: 232, y: fy - 13, width: 328, height: 26, rx: 6 }));
+    const name = clip(`#${e.feature} ${info.dead ? "(no label)" : info.label}`, 29);
+    g.append(svg("text", { x: 242, y: fy + 5 }, `${name} @${e.pos}`));
+    g.append(svg("text", { x: 552, y: fy + 5, "text-anchor": "end", class: "node-effect" },
+                 `${e.effect >= 0 ? "+" : ""}${e.effect.toFixed(2)}`));
+    g.addEventListener("click", () => selectFeature(e.feature));
+    g.addEventListener("keydown", (ev) => ev.key === "Enter" && selectFeature(e.feature));
+    graph.append(g);
+  });
+  const target = svg("g", { class: "node-target" });
+  target.append(svg("rect", { x: 628, y: targetY - 24, width: 128, height: 48, rx: 8 }));
+  target.append(svg("text", { x: 692, y: targetY - 3, "text-anchor": "middle" },
+                    clip(JSON.stringify(tokenizer.tokenStr(analysis.ids[q])), 14)));
+  target.append(svg("text", { x: 692, y: targetY + 15, "text-anchor": "middle", class: "node-effect" },
+                    `p = ${(prob * 100).toFixed(1)}%`));
+  graph.append(target);
+  $("circuit-graph").replaceChildren(graph);
+  return top.length;
+}
+
+async function renderCircuit() {
+  const panel = $("circuit");
+  const q = selectedPos;
+  if (q === null) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  $("circuit-title").textContent = `Why the model wrote ${quoted(analysis.ids[q])} (position ${q})`;
+  if (q < 2) {
+    $("circuit-meta").textContent =
+      "The first token of a story is predicted from the start-of-story token alone, which the SAE skips, " +
+      "so there are no features to show.";
+    $("circuit-graph").replaceChildren();
+    return;
+  }
+  $("circuit-meta").textContent = "Computing\u2026";
+  $("circuit-graph").replaceChildren();
+  await new Promise((r) => setTimeout(r, 0)); // let the page paint first
+  if (selectedPos !== q) return;
+  const t0 = performance.now();
+  const result = ablationEffects(model, sae, analysis.ids, q - 1, analysis.ids[q], CIRCUIT_WINDOW);
+  if (selectedPos !== q) return;
+  const shown = drawCircuit(q, result);
+  $("circuit-meta").textContent =
+    `Predicted at position ${q - 1} with probability ${(result.prob * 100).toFixed(1)}%. ` +
+    `Showing the ${shown} largest of ${result.effects.length} features active in the last ` +
+    `${Math.min(CIRCUIT_WINDOW, q - 1)} positions (change in the token's logit when removed); ` +
+    `computed in ${((performance.now() - t0) / 1000).toFixed(2)} s.`;
+}
+
 function selectFeature(f) {
   selectedFeature = f;
   renderTokens();
@@ -226,6 +322,7 @@ function analyze() {
   const t0 = performance.now();
   analysis = { ids, codes: featuresForTokens(model, sae, ids) };
   selectedPos = null;
+  renderCircuit();
   setStatus(`Analyzed ${ids.length - 1} tokens in ${((performance.now() - t0) / 1000).toFixed(2)} s.`);
   renderTokens();
   renderActive();
@@ -245,6 +342,7 @@ async function init() {
     selectedPos = Number(pos) === selectedPos ? null : Number(pos);
     renderTokens();
     renderActive();
+    renderCircuit();
   });
   try {
     const progress = (got, total) => {

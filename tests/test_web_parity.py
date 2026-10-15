@@ -146,3 +146,52 @@ def test_shipped_sae_parity():
         "Lily found a red ball in the park. She said, \"Can I play with it?\" Her mom smiled. " * 8
     )
     check_sae_parity(SHIPPED, SHIPPED_SAE, [story[: manifest["config"]["n_ctx"]]])
+
+
+def check_steering_and_attribution_parity(
+    model_dir: Path, sae_dir: Path, ids: list[int], n_greedy: int, coef: float
+) -> None:
+    from glassbox.attribution import ablation_effects, candidates
+    from glassbox.steer import feature_direction, steering_hook
+
+    model, tok, _ = load_exported(model_dir)
+    sae, _ = load_exported_sae(sae_dir)
+    layer = sae.cfg.layer
+    t = len(ids) - 1
+    y = ids[t]  # any target token works for parity
+    prompt = [tok.eot_id] + ids[1:4]
+    feature = 3
+    res, _ = run_node({
+        "model_dir": model_dir, "sae_dir": sae_dir,
+        "greedy": [{"prompt": prompt, "n": n_greedy, "steer": {"feature": feature, "coef": coef}}],
+        "attribution": [{"ids": ids, "t": t, "y": y, "window": 8}],
+    })
+
+    hooks = {layer: steering_hook(coef * feature_direction(sae, feature))}
+    py = model.generate(torch.tensor([prompt]), n_greedy, temperature=0, resid_hooks=hooks)[0, len(prompt):]
+    assert res["greedy"][0] == py.tolist()
+    with torch.no_grad():  # the steering vector really changes the model's predictions
+        delta = model(torch.tensor([prompt]), resid_hooks=hooks)[0] - model(torch.tensor([prompt]))[0]
+    assert delta.abs().max() > 0.1
+
+    cands = candidates(model, sae, ids, t)
+    effects = dict(zip([(p, f) for p, f, _ in cands], ablation_effects(model, sae, ids, t, y, cands)))
+    js = res["attribution"][0]["effects"]
+    js_effects = {(e["pos"], e["feature"]): e["effect"] for e in js}
+    shared = effects.keys() & js_effects.keys()
+    assert len(shared) >= 0.95 * len(effects) and shared  # near-ties may swap a feature in or out
+    for key in shared:
+        assert abs(js_effects[key] - effects[key]) < SAE_PARITY_MAX_ABS_DIFF
+    assert max(abs(v) for v in effects.values()) > 0.01  # non-trivial comparison
+
+
+def test_tiny_steering_and_attribution_parity(tiny_export):
+    ids = np.random.default_rng(3).integers(0, 299, 20).tolist()
+    check_steering_and_attribution_parity(tiny_export, tiny_export / "sae", ids, n_greedy=80, coef=60.0)
+
+
+@pytest.mark.skipif(not (SHIPPED_SAE / "manifest.json").exists(), reason="run python -m glassbox.export sae")
+def test_shipped_steering_and_attribution_parity():
+    _, tok, _ = load_exported(SHIPPED)
+    ids = [tok.eot_id] + tok.encode("Once upon a time, there was a little girl named Lily. She liked to play")
+    check_steering_and_attribution_parity(SHIPPED, SHIPPED_SAE, ids, n_greedy=300, coef=6.0)

@@ -176,18 +176,20 @@ class GPT(nn.Module):
         top_k: int | None = None,
         stop_token: int | None = None,
         generator: torch.Generator | None = None,
+        resid_hooks: dict | None = None,
     ) -> torch.Tensor:
         """Autoregressive sampling for a single sequence (idx shape (1, T)).
         temperature == 0 means greedy decoding.
 
         When the sequence outgrows the context, the window restarts from the last n_ctx // 2
         tokens. The web engine uses the same rule, so its KV cache is rebuilt only once every
-        n_ctx // 2 tokens and both produce identical text."""
+        n_ctx // 2 tokens and both produce identical text. resid_hooks are passed to forward()
+        (e.g. to steer); they see window positions, as the web engine does."""
         start = 0
         for _ in range(max_new_tokens):
             if idx.shape[1] - start > self.cfg.n_ctx:
                 start = idx.shape[1] - self.cfg.n_ctx // 2
-            logits, _ = self(idx[:, start:])
+            logits, _ = self(idx[:, start:], resid_hooks=resid_hooks)
             logits = logits[:, -1, :]
             if temperature == 0:
                 nxt = logits.argmax(-1, keepdim=True)

@@ -7,7 +7,8 @@ import { test } from "node:test";
 import { halfToFloat } from "../engine/fp16.js";
 import { generateIds } from "../engine/generate.js";
 import { GPT } from "../engine/model.js";
-import { SAE, featuresForTokens } from "../engine/sae.js";
+import { ablationEffects } from "../engine/attribution.js";
+import { SAE, featureVector, featuresForTokens, steeringHooks, steeringVector } from "../engine/sae.js";
 import { argmax, mulberry32, sampleToken } from "../engine/sampling.js";
 import { Tokenizer } from "../engine/tokenizer.js";
 
@@ -36,7 +37,7 @@ function randomModel(cfg = CFG, seed = 0) {
 }
 
 /** Reference: recompute every step from scratch, applying the same context rule. */
-function naiveGreedy(model, prompt, n) {
+function naiveGreedy(model, prompt, n, hooks = null) {
   const tokens = [...prompt];
   const T = model.cfg.n_ctx;
   let start = 0;
@@ -44,7 +45,7 @@ function naiveGreedy(model, prompt, n) {
     if (tokens.length - start > T) start = tokens.length - T / 2;
     const cache = model.newCache();
     let logits;
-    for (let i = start; i < tokens.length; i++) logits = model.step(cache, tokens[i]);
+    for (let i = start; i < tokens.length; i++) logits = model.step(cache, tokens[i], true, hooks);
     tokens.push(argmax(logits));
   }
   return tokens.slice(prompt.length);
@@ -188,4 +189,56 @@ test("featuresForTokens skips position 0 and matches encoding the captured resid
     if (pos > 0) assert.deepEqual(out[pos], sae.encode(resid));
   });
   assert.throws(() => featuresForTokens(model, sae, new Array(CFG.n_ctx + 1).fill(0)), /at most/);
+});
+
+function randomSAE(seed, F = 30, k = 4) {
+  const rng = mulberry32(seed);
+  const d = CFG.d_model;
+  const rand = (n) => Float32Array.from({ length: n }, () => rng() * 2 - 1);
+  const tensors = new Map([["W_enc", rand(d * F)], ["b_enc", rand(F)], ["W_dec", rand(F * d)], ["b_dec", rand(d)]]);
+  return new SAE({ d_in: d, n_features: F, k, layer: 1, scale: 0.8 }, tensors);
+}
+
+test("cloneCache continues exactly like the original cache", () => {
+  const model = randomModel();
+  const cache = model.newCache();
+  [1, 2, 3, 4].forEach((id) => model.step(cache, id, false));
+  const copy = model.cloneCache(cache, 2);
+  const fresh = model.newCache();
+  [1, 2].forEach((id) => model.step(fresh, id, false));
+  assert.deepEqual(model.step(copy, 9), model.step(fresh, 9));
+  assert.equal(cache.len, 4); // the original is untouched
+});
+
+test("ablation effects equal a full rerun with the feature removed", () => {
+  const model = randomModel();
+  const sae = randomSAE(4);
+  const ids = [3, 7, 1, 12, 5, 9, 2];
+  const t = 6;
+  const y = 11;
+  const { clean, effects } = ablationEffects(model, sae, ids, t, y, 4);
+  assert.ok(effects.length > 0 && effects.every((e) => e.pos >= 3 && e.pos <= t));
+  for (const { pos, feature, act, effect } of effects) {
+    const d = featureVector(sae, feature);
+    const cache = model.newCache();
+    let logits;
+    ids.slice(0, t + 1).forEach((id, q) => {
+      logits = model.step(cache, id, true, { 1: (x, p) => { if (p === pos) for (let i = 0; i < x.length; i++) x[i] -= act * d[i]; } });
+    });
+    assert.ok(Math.abs(clean - logits[y] - effect) < 1e-5);
+  }
+});
+
+test("steering applies at positions >= 1 and survives context restarts", () => {
+  const model = randomModel();
+  const sae = randomSAE(5);
+  const vec = steeringVector(sae, 3, 2.5);
+  assert.ok(Math.abs(Math.hypot(...vec) - 2.5) < 1e-5);
+  const hooks = steeringHooks(1, vec);
+  const x0 = new Float32Array(CFG.d_model);
+  hooks[1](x0, 0);
+  assert.ok(x0.every((v) => v === 0));
+  const steered = generateIds(model, [1, 2, 3], { maxNewTokens: 30, temperature: 0, hooks });
+  assert.deepEqual(steered, naiveGreedy(model, [1, 2, 3], 30, hooks));
+  assert.notDeepEqual(steered, generateIds(model, [1, 2, 3], { maxNewTokens: 30, temperature: 0 }));
 });

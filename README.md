@@ -7,6 +7,8 @@ Status:
 - **Milestone 2** (inference in the browser) done: [results/web_parity.md](results/web_parity.md)
 - **Milestone 3** (sparse autoencoder + feature microscope) done:
   [results/sae_eval.md](results/sae_eval.md), [results/sae_features.md](results/sae_features.md)
+- **Milestone 4** (steering + attribution) done:
+  [results/steering.md](results/steering.md), [results/attribution.md](results/attribution.md)
 
 Every number in `results/` is written by a script; none are typed by hand.
 
@@ -19,6 +21,10 @@ no server-side computation and no API key. ES modules need to be served over HTT
 python -m http.server 8000 -d web
 # open http://localhost:8000 (generate) or http://localhost:8000/microscope.html (SAE features)
 ```
+
+- **Generate**: write a story; open *Steering* to push it toward a concept with an SAE feature.
+- **Microscope**: type text, click a token to see the features active on it and a circuit graph of the
+  features that led the model to write it (computed by ablation in the browser).
 
 URL parameters make a story shareable, e.g.
 `?prompt=Tom%20had%20a%20red%20ball.&seed=3&temperature=0.8&topk=50&tokens&run`.
@@ -65,6 +71,13 @@ python -m glassbox.export sae          # the selected SAE -> web/model/sae
 python -m glassbox.features            # examples + labels -> web/model/sae/features.json, results/sae_features.*
 ```
 
+## Reproduce milestone 4: steering and attribution
+
+```bash
+python -m glassbox.steer           # feature vs random directions -> results/steering.*, web/model/sae/steering.json
+python -m glassbox.attribution     # DLA and gradient estimates vs ablation -> results/attribution.*
+```
+
 ## Tests
 
 ```bash
@@ -75,7 +88,8 @@ cd web && node --test "test/*.test.mjs" # JS unit tests only
 The parity tests run the JavaScript engine (through Node.js) and PyTorch on the same exported
 weights and require the max absolute logit difference to stay below 1e-3. They also require
 identical tokenization and identical greedy generation, including past the 256-token context,
-and, for the SAE, matching residual activations, pre-activations and active features.
+and, for the SAE, matching residual activations, pre-activations and active features, identical
+steered generation, and matching ablation effects.
 They run on a small random model every time and on the shipped `web/model` when present.
 
 ## Layout
@@ -90,11 +104,14 @@ python/glassbox/
   export.py        float16 weights + manifest + tokenizer for the web engine (model and SAE)
   sae.py           top-k sparse autoencoder, activation stream, training
   features.py      feature densities, top examples, automatic labels, comparison with other bases
+  steer.py         steering with feature directions, benchmark against random directions
+  attribution.py   feature attribution (DLA, gradient x activation) validated by ablation
   eval/lm_eval.py      val loss vs uniform/unigram/bigram baselines, loss curve, samples
   eval/web_parity.py   JS engine vs PyTorch: logits, tokenizer, greedy generation, speed
   eval/sae_eval.py     SAE variance explained, L0, dead features, loss when spliced in; PCA baselines
 web/
-  engine/          JS inference: tokenizer, forward pass with KV cache and residual hooks, SAE, sampling
+  engine/          JS inference: tokenizer, forward pass with KV cache and residual hooks, SAE,
+                   steering, ablation-based attribution, sampling
   ui/              page logic and styles (index.html: generate, microscope.html: SAE features)
   model/           exported model served to the browser
   test/            JS unit tests (node --test)

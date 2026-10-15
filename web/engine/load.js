@@ -51,15 +51,23 @@ export async function loadModel(baseUrl, onProgress) {
   return { model: GPT.fromBuffers(manifest, buffer), tokenizer: new Tokenizer(tokJson), manifest };
 }
 
-/** Load an exported SAE and its features.json; refuses an SAE made for a different model. */
-export async function loadSAE(baseUrl, modelManifest, onProgress) {
+/**
+ * Load an exported SAE plus the requested companion files (features.json from features.py,
+ * steering.json from steer.py). Refuses files made for a different model or SAE.
+ */
+export async function loadSAE(baseUrl, modelManifest, onProgress, { features = true, steering = false } = {}) {
   const { base, manifest, buffer } = await loadExport(baseUrl, onProgress);
   if (manifest.model_weights_sha256 !== modelManifest.weights_sha256) {
     throw new Error("this SAE was exported for a different model");
   }
-  const features = await (await fetchOk(new URL("features.json", base))).json();
-  if (features.sae_weights_sha256 !== manifest.weights_sha256) {
-    throw new Error("features.json was computed for a different SAE");
+  const out = { sae: SAE.fromBuffers(manifest, buffer), manifest };
+  for (const [name, wanted] of [["features", features], ["steering", steering]]) {
+    if (!wanted) continue;
+    const json = await (await fetchOk(new URL(`${name}.json`, base))).json();
+    if (json.sae_weights_sha256 !== manifest.weights_sha256) {
+      throw new Error(`${name}.json was computed for a different SAE`);
+    }
+    out[name] = json;
   }
-  return { sae: SAE.fromBuffers(manifest, buffer), manifest, features };
+  return out;
 }

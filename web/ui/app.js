@@ -1,5 +1,6 @@
 import { generateIds, generateTokens } from "../engine/generate.js";
-import { loadModel } from "../engine/load.js";
+import { loadModel, loadSAE } from "../engine/load.js";
+import { steeringHooks, steeringVector } from "../engine/sae.js";
 import { topTokens } from "../engine/sampling.js";
 
 const $ = (id) => document.getElementById(id);
@@ -13,6 +14,8 @@ const EXAMPLES = [
 ];
 
 let engine = null;
+let steering = null; // {sae, steering} once loaded
+let steeringLoad = null;
 let running = false;
 let stopRequested = false;
 
@@ -40,6 +43,35 @@ function tokenTitle(tokenizer, id, prob, modelProbs) {
   return lines.join("\n");
 }
 
+/** Load the SAE and the steering presets the first time they are needed. */
+function ensureSteering() {
+  steeringLoad ??= loadSAE(new URL("../model/sae/", import.meta.url), engine.manifest, null,
+                           { features: false, steering: true })
+    .then((s) => {
+      steering = s;
+      $("steer-layer").textContent = String(s.steering.layer);
+      const select = $("steer-feature");
+      for (const p of s.steering.presets) {
+        select.append(new Option(`${p.word} (feature #${p.feature})`, String(p.feature)));
+      }
+      return s;
+    });
+  return steeringLoad;
+}
+
+/** Steering hooks for the current controls, or null when steering is off. */
+async function currentSteering() {
+  const feature = $("steer-feature").value;
+  const alpha = Number($("steer-alpha").value);
+  if (feature === "" || alpha === 0) return null;
+  const { sae, steering: cfg } = await ensureSteering();
+  const preset = cfg.presets.find((p) => String(p.feature) === feature);
+  return {
+    hooks: steeringHooks(cfg.layer, steeringVector(sae, Number(feature), alpha * cfg.resid_norm)),
+    note: `steered toward "${preset.word}" (feature #${feature}) at strength ${alpha}`,
+  };
+}
+
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
 async function generate() {
@@ -60,6 +92,13 @@ async function generate() {
     seed: Number($("seed").value) >>> 0,
     stopToken: tokenizer.eotId,
   };
+  let steer = null;
+  try {
+    steer = await currentSteering();
+  } catch (err) {
+    setStatus(`Steering unavailable: ${err.message}`, true);
+  }
+  if (steer) opts.hooks = steer.hooks;
 
   const out = $("output");
   out.replaceChildren();
@@ -106,7 +145,8 @@ async function generate() {
     const tail = decoder.decode();
     if (tail) out.append(tail);
     const seconds = (performance.now() - t0) / 1000;
-    const why = stopRequested ? "stopped" : ended ? "model ended the story" : "reached max tokens";
+    const why = (stopRequested ? "stopped" : ended ? "model ended the story" : "reached max tokens") +
+      (steer ? ` \u00b7 ${steer.note}` : "");
     const rate = seconds > 0.01 ? ` (${(count / seconds).toFixed(0)} tokens/s)` : "";
     $("stats").textContent = `${count} tokens in ${seconds.toFixed(2)} s${rate} \u00b7 ${why}`;
     setStatus("Ready.");
@@ -131,6 +171,7 @@ async function init() {
   bindSlider("temperature", (v) => (v === 0 ? "0 (greedy)" : v.toFixed(2)));
   bindSlider("topk", (v) => (v === 0 ? "off" : String(v)));
   bindSlider("maxtok", String);
+  bindSlider("steer-alpha", (v) => (v === 0 ? "0 (off)" : v.toFixed(2)));
   $("reseed").addEventListener("click", () => ($("seed").value = Math.floor(Math.random() * 1e6)));
   $("show-tokens").addEventListener("change", (e) => $("output").classList.toggle("show-tokens", e.target.checked));
   $("generate").addEventListener("click", generate);
@@ -150,10 +191,11 @@ async function init() {
     $("examples").append(chip);
   }
 
-  // Shareable settings: ?prompt=...&temperature=0.8&topk=50&maxtok=208&seed=3&tokens&run
+  // Shareable settings: ?prompt=...&temperature=0.8&topk=50&maxtok=208&seed=3&steer=819&alpha=0.5&tokens&run
   const params = new URLSearchParams(location.search);
   if (params.has("prompt")) $("prompt").value = params.get("prompt");
-  for (const id of ["temperature", "topk", "maxtok", "seed"]) {
+  if (params.has("alpha")) params.set("steer-alpha", params.get("alpha"));
+  for (const id of ["temperature", "topk", "maxtok", "seed", "steer-alpha"]) {
     if (params.has(id)) {
       $(id).value = params.get(id);
       $(id).dispatchEvent(new Event("input"));
@@ -182,6 +224,14 @@ async function init() {
     $("generate").disabled = false;
     $("generate").textContent = "Generate";
     if (selftestMode) selftest();
+    $("steer-panel").addEventListener("toggle", () => {
+      if ($("steer-panel").open) ensureSteering().catch((err) => setStatus(`Steering unavailable: ${err.message}`, true));
+    });
+    if (params.has("steer")) {
+      $("steer-panel").open = true;
+      await ensureSteering();
+      $("steer-feature").value = params.get("steer");
+    }
     if (params.has("run")) await generate();
   } catch (err) {
     setStatus(`Could not load the model: ${err.message}`, true);

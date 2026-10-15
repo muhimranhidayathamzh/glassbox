@@ -1,0 +1,31 @@
+{
+  "cases": 300,
+  "window": 8,
+  "mean_candidates": 64.0,
+  "seed": 0,
+  "estimates": {
+    "direct logit attribution": {
+      "spearman": 0.1664229242979243,
+      "top1": 0.56
+    },
+    "gradient x activation": {
+      "spearman": 0.732473137973138,
+      "top1": 0.44333333333333336
+    },
+    "activation only (baseline)": {
+      "spearman": 0.1608525641025641,
+      "top1": 0.1
+    },
+    "random order (floor)": {
+      "spearman": -0.00034401709401709425,
+      "top1": 0.016666666666666666
+    }
+  },
+  "effects": {
+    "share_at_t": 0.4243461742762842,
+    "median_abs": 0.02431011199951172,
+    "median_max_abs": 4.4219889640808105,
+    "share_positive": 0.5645833333333333
+  },
+  "seconds": 158.4
+}
