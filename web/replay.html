@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Glassbox · training replay</title>
+  <meta name="description" content="Replay the training of a small language model: loss, attention heads, and samples per checkpoint.">
+  <link rel="stylesheet" href="ui/style.css">
+  <script type="module" src="ui/replay.js"></script>
+</head>
+<body>
+  <header>
+    <nav class="nav"><a href="index.html">Generate</a><a href="microscope.html">Microscope</a><a href="replay.html" aria-current="page">Replay</a></nav>
+    <h1>Training replay</h1>
+    <p class="lede">The model was saved at <span id="n-ckpt">&hellip;</span> moments during training, spaced
+      logarithmically. Slide through them to see the loss fall, the attention heads change, and the stories improve.</p>
+  </header>
+
+  <main class="viz-root">
+    <section class="panel">
+      <label for="ckpt" class="field-label">Checkpoint</label>
+      <input type="range" id="ckpt" min="0" max="0" step="1" value="0">
+      <p id="ckpt-label" class="hint"></p>
+      <div class="tiles">
+        <div class="tile"><span class="tile-label">Validation loss</span><span class="tile-value" id="t-val"></span></div>
+        <div class="tile"><span class="tile-label">Best induction score</span><span class="tile-value" id="t-ind"></span><span class="tile-note" id="t-ind-head"></span></div>
+        <div class="tile"><span class="tile-label">Best previous-token score</span><span class="tile-value" id="t-prev"></span><span class="tile-note" id="t-prev-head"></span></div>
+        <div class="tile"><span class="tile-label">Copy test: loss on 1st &rarr; 2nd copy</span><span class="tile-value" id="t-copy"></span></div>
+      </div>
+      <p id="status" role="status"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Loss during training</h2>
+      <div class="legend-row"><span class="legend-item"><span class="key key-1"></span>training loss</span><span class="legend-item"><span class="key key-2"></span>validation loss</span><span class="legend-item"><span class="key key-band"></span>largest jump in induction score</span></div>
+      <div id="loss-chart" class="chart"></div>
+      <p class="hint">Training loss is the average over the previous 50 steps, so early on it lags behind the
+        validation loss, which is measured at that exact step. Click the chart to jump to a checkpoint.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Do induction heads appear?</h2>
+      <p class="hint">An induction head looks back to what followed the previous occurrence of the current token,
+        which lets a model continue a repeated pattern. Scores are measured on random tokens repeated twice:
+        1 is a perfect induction (or previous-token) head.</p>
+      <div class="legend-row"><span class="legend-item"><span class="key key-1"></span>best induction (prefix-matching) score</span><span class="legend-item"><span class="key key-2"></span>best previous-token score</span></div>
+      <div id="score-chart" class="chart"></div>
+      <p id="verdict" class="verdict"></p>
+    </section>
+
+    <div class="columns">
+      <section class="panel">
+        <h2>All heads at this checkpoint</h2>
+        <div class="seg" role="group" aria-label="Score shown">
+          <button type="button" id="m-prefix" class="seg-on">induction score</button>
+          <button type="button" id="m-prev">previous-token score</button>
+        </div>
+        <div id="heads" class="heads"></div>
+        <p class="hint">Rows are layers, columns are heads. Click a head to see its attention.</p>
+      </section>
+      <section class="panel">
+        <h2 id="pattern-title"></h2>
+        <div id="pattern" class="chart"></div>
+        <p class="hint">Each row is a token and shows where it looks (darker = more attention). Outlined cells are
+          where an induction head would look: the token after the earlier copy of the current one.</p>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2>What the model writes at this checkpoint</h2>
+      <p class="hint">Greedy continuations of three fixed prompts, computed from the saved checkpoint by
+        <code>python -m glassbox.induction</code> (the browser shows them; it does not run old checkpoints).</p>
+      <ol id="samples" class="samples"></ol>
+    </section>
+
+    <section class="panel">
+      <details>
+        <summary>All checkpoints as a table</summary>
+        <div class="table-wrap"><table id="table"></table></div>
+      </details>
+    </section>
+  </main>
+  <div id="tooltip" class="tooltip" hidden></div>
+</body>
+</html>

@@ -9,6 +9,7 @@ Status:
   [results/sae_eval.md](results/sae_eval.md), [results/sae_features.md](results/sae_features.md)
 - **Milestone 4** (steering + attribution) done:
   [results/steering.md](results/steering.md), [results/attribution.md](results/attribution.md)
+- **Milestone 5** (training replay + induction heads) done: [results/induction.md](results/induction.md)
 
 Every number in `results/` is written by a script; none are typed by hand.
 
@@ -19,12 +20,14 @@ no server-side computation and no API key. ES modules need to be served over HTT
 
 ```bash
 python -m http.server 8000 -d web
-# open http://localhost:8000 (generate) or http://localhost:8000/microscope.html (SAE features)
+# open http://localhost:8000 (generate), /microscope.html (SAE features), /replay.html (training replay)
 ```
 
 - **Generate**: write a story; open *Steering* to push it toward a concept with an SAE feature.
 - **Microscope**: type text, click a token to see the features active on it and a circuit graph of the
   features that led the model to write it (computed by ablation in the browser).
+- **Replay**: slide through the checkpoints saved during training: loss curves, induction and
+  previous-token scores of every attention head, attention patterns, and what the model wrote then.
 
 URL parameters make a story shareable, e.g.
 `?prompt=Tom%20had%20a%20red%20ball.&seed=3&temperature=0.8&topk=50&tokens&run`.
@@ -78,6 +81,12 @@ python -m glassbox.steer           # feature vs random directions -> results/ste
 python -m glassbox.attribution     # DLA and gradient estimates vs ablation -> results/attribution.*
 ```
 
+## Reproduce milestone 5: training replay
+
+```bash
+python -m glassbox.induction       # all checkpoints -> results/induction.*, web/model/replay.json
+```
+
 ## Tests
 
 ```bash
@@ -106,13 +115,14 @@ python/glassbox/
   features.py      feature densities, top examples, automatic labels, comparison with other bases
   steer.py         steering with feature directions, benchmark against random directions
   attribution.py   feature attribution (DLA, gradient x activation) validated by ablation
+  induction.py     induction / previous-token head scores per checkpoint, probes and controls
   eval/lm_eval.py      val loss vs uniform/unigram/bigram baselines, loss curve, samples
   eval/web_parity.py   JS engine vs PyTorch: logits, tokenizer, greedy generation, speed
   eval/sae_eval.py     SAE variance explained, L0, dead features, loss when spliced in; PCA baselines
 web/
   engine/          JS inference: tokenizer, forward pass with KV cache and residual hooks, SAE,
                    steering, ablation-based attribution, sampling
-  ui/              page logic and styles (index.html: generate, microscope.html: SAE features)
+  ui/              page logic and styles (index.html, microscope.html, replay.html)
   model/           exported model served to the browser
   test/            JS unit tests (node --test)
   tools/           Node bridge used by the Python parity tests

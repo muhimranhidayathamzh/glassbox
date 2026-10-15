@@ -62,17 +62,27 @@ class CausalSelfAttention(nn.Module):
         mask = torch.tril(torch.ones(cfg.n_ctx, cfg.n_ctx, dtype=torch.bool))
         self.register_buffer("mask", mask, persistent=False)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def _heads(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         B, T, C = x.shape
         q, k, v = self.qkv(x).split(C, dim=-1)
         # (B, T, C) -> (B, n_head, T, d_head)
-        q = q.view(B, T, self.n_head, self.d_head).transpose(1, 2)
-        k = k.view(B, T, self.n_head, self.d_head).transpose(1, 2)
-        v = v.view(B, T, self.n_head, self.d_head).transpose(1, 2)
+        return tuple(t.view(B, T, self.n_head, self.d_head).transpose(1, 2) for t in (q, k, v))
+
+    def _pattern(self, q: torch.Tensor, k: torch.Tensor) -> torch.Tensor:
+        T = q.shape[-2]
         scores = (q @ k.transpose(-2, -1)) / math.sqrt(self.d_head)
         scores = scores.masked_fill(~self.mask[:T, :T], float("-inf"))
-        pattern = torch.softmax(scores, dim=-1)
-        y = pattern @ v
+        return torch.softmax(scores, dim=-1)
+
+    def attention_pattern(self, x: torch.Tensor) -> torch.Tensor:
+        """Attention weights (B, n_head, T, T) for the (already LayerNormed) input x."""
+        q, k, _ = self._heads(x)
+        return self._pattern(q, k)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        B, T, C = x.shape
+        q, k, v = self._heads(x)
+        y = self._pattern(q, k) @ v
         y = y.transpose(1, 2).contiguous().view(B, T, C)
         return self.proj(y)
 
