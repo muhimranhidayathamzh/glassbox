@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Glassbox · feature microscope</title>
+  <meta name="description" content="Look inside a small language model: sparse autoencoder features, live in the browser.">
+  <link rel="stylesheet" href="ui/style.css">
+  <script type="module" src="ui/microscope.js"></script>
+</head>
+<body>
+  <header>
+    <nav class="nav"><a href="index.html">Generate</a><a href="microscope.html" aria-current="page">Microscope</a></nav>
+    <h1>Feature microscope</h1>
+    <p class="lede">A sparse autoencoder (SAE) splits the model's internal state at one layer into
+      <span id="n-features">&hellip;</span> features. Type any text, click a token, and see which features fire on it.
+      Everything runs in your browser.</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <label for="text" class="field-label">Text under the microscope</label>
+      <textarea id="text" rows="4" spellcheck="false"></textarea>
+      <div class="actions">
+        <button id="analyze" class="primary" disabled>Loading&hellip;</button>
+        <span id="analyze-note" class="hint"></span>
+      </div>
+      <progress id="progress" max="1" value="0"></progress>
+      <p id="status" role="status"></p>
+      <div id="tokens" class="story token-strip" aria-label="Tokens of your text"></div>
+      <p class="legend" id="tokens-legend">Click a token to see the features active on it.</p>
+    </section>
+
+    <div class="columns">
+      <section class="panel">
+        <h2 id="active-title">Features most active in this text</h2>
+        <ol id="active" class="feature-list"></ol>
+      </section>
+
+      <section class="panel">
+        <h2>Find a feature</h2>
+        <input id="search" type="search" placeholder="Token or feature id, e.g. ball, named, 42" autocomplete="off">
+        <ol id="results" class="feature-list compact"></ol>
+      </section>
+    </div>
+
+    <section class="panel" id="feature" hidden>
+      <h2 id="feature-title"></h2>
+      <p id="feature-meta" class="hint"></p>
+      <div class="dist-grid">
+        <div><h3>Token itself</h3><ol id="dist-cur" class="dist"></ol></div>
+        <div><h3>Previous token</h3><ol id="dist-prev" class="dist"></ol></div>
+        <div><h3>Next token</h3><ol id="dist-next" class="dist"></ol></div>
+      </div>
+      <h3>Strongest activations on validation stories</h3>
+      <ol id="examples" class="examples"></ol>
+    </section>
+
+    <section class="notes">
+      <p>How to read this: the SAE was trained on the residual stream entering block <span id="sae-layer">?</span>
+        of the model. Each feature has a label made automatically from its strongest examples: <code>"ball"</code>
+        means it fires on that token, <code>after "named"</code> on the token after it, <code>before "said"</code> on
+        the token before it. The percentage is how many of those examples agree, so a low percentage means the
+        label does not explain the feature well. Labels and examples come from a script
+        (<code>python -m glassbox.features</code>), not from a person.</p>
+      <p>The first position (the start-of-story token) is skipped, as in training. Shading shows activation relative
+        to the feature's strongest validation example.</p>
+    </section>
+  </main>
+</body>
+</html>

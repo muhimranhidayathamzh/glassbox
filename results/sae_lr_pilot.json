@@ -1,0 +1,53 @@
+{
+  "k": 16,
+  "n_features": 2048,
+  "layer": 2,
+  "tokens_per_run": 1000000,
+  "seed": 0,
+  "runs": [
+    {
+      "lr": 0.0002,
+      "final_fvu": 0.38273156177802165,
+      "dead": 0,
+      "seconds": 134.9
+    },
+    {
+      "lr": 0.0005,
+      "final_fvu": 0.25168145313614704,
+      "dead": 0,
+      "seconds": 136.4
+    },
+    {
+      "lr": 0.001,
+      "final_fvu": 0.18587855042004195,
+      "dead": 0,
+      "seconds": 109.3
+    },
+    {
+      "lr": 0.002,
+      "final_fvu": 0.14171060406770863,
+      "dead": 0,
+      "seconds": 106.4
+    },
+    {
+      "lr": 0.004,
+      "final_fvu": 0.11482015618535339,
+      "dead": 0,
+      "seconds": 114.1
+    },
+    {
+      "lr": 0.008,
+      "final_fvu": 0.10744020452753442,
+      "dead": 0,
+      "seconds": 133.1
+    },
+    {
+      "lr": 0.016,
+      "final_fvu": 0.11441869215398538,
+      "dead": 0,
+      "seconds": 108.7
+    }
+  ],
+  "best_lr": 0.008,
+  "best_is_largest_tried": false
+}

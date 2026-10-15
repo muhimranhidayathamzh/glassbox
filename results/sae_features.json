@@ -1,0 +1,207 @@
+{
+  "sae": {
+    "d_in": 192,
+    "n_features": 2048,
+    "k": 8,
+    "layer": 2,
+    "scale": 0.7021811869515026
+  },
+  "eval_tokens": 2088960,
+  "eval_windows": 8192,
+  "n_features": 2048,
+  "dead": 231,
+  "density_buckets": {
+    "<1e-4": 324,
+    "1e-4..1e-3": 486,
+    "1e-3..1e-2": 876,
+    "1e-2..1e-1": 127,
+    ">=0.1": 4
+  },
+  "token_specificity": {
+    "SAE (trained)": {
+      "directions_scored": 1586,
+      "directions_skipped": 231,
+      "mean_top_token_share": 0.832972189076443,
+      "share_ge_0.5": 0.8694829760403531,
+      "share_ge_0.8": 0.7093316519546028
+    },
+    "residual dimensions (+/-)": {
+      "directions_scored": 383,
+      "directions_skipped": 1,
+      "mean_top_token_share": 0.4672323759791123,
+      "share_ge_0.5": 0.42036553524804177,
+      "share_ge_0.8": 0.1174934725848564
+    },
+    "random directions": {
+      "directions_scored": 381,
+      "directions_skipped": 3,
+      "mean_top_token_share": 0.4579677540307462,
+      "share_ge_0.5": 0.3884514435695538,
+      "share_ge_0.8": 0.12073490813648294
+    },
+    "untrained SAE (same k)": {
+      "directions_scored": 2033,
+      "directions_skipped": 15,
+      "mean_top_token_share": 0.45757039017104373,
+      "share_ge_0.5": 0.3866207575012297,
+      "share_ge_0.8": 0.11067388096409247
+    }
+  },
+  "example_positions": [
+    {
+      "positions": "1-1",
+      "share_of_examples": 0.002267221566556929,
+      "share_if_uniform": 0.00392156862745098,
+      "mean_residual_norm": 33.84257507324219
+    },
+    {
+      "positions": "2-3",
+      "share_of_examples": 0.008168209205540717,
+      "share_if_uniform": 0.00784313725490196,
+      "mean_residual_norm": 29.161949157714844
+    },
+    {
+      "positions": "4-7",
+      "share_of_examples": 0.028511087645195353,
+      "share_if_uniform": 0.01568627450980392,
+      "mean_residual_norm": 25.992082595825195
+    },
+    {
+      "positions": "8-15",
+      "share_of_examples": 0.08606124604012672,
+      "share_if_uniform": 0.03137254901960784,
+      "mean_residual_norm": 23.48143768310547
+    },
+    {
+      "positions": "16-63",
+      "share_of_examples": 0.2910118640909373,
+      "share_if_uniform": 0.18823529411764706,
+      "mean_residual_norm": 20.17738151550293
+    },
+    {
+      "positions": "64-255",
+      "share_of_examples": 0.5839803714516429,
+      "share_if_uniform": 0.7529411764705882,
+      "mean_residual_norm": 18.892465591430664
+    }
+  ],
+  "labels": {
+    "features_with_enough_examples": 1586,
+    "too_rare": 231,
+    "kind": {
+      "token": 1368,
+      "before": 56,
+      "after": 162
+    },
+    "share_ge_0.8": 1208,
+    "share_0.5_to_0.8": 258,
+    "share_lt_0.5": 120
+  },
+  "random_sample": [
+    {
+      "id": 32,
+      "label": "\" They\"",
+      "label_share": 1.0,
+      "density": 0.00875698912377451,
+      "n_examples": 20,
+      "top_example": "<\\|endoftext\\|>Lila and Tom were playing near the big cliff.[[ They]] liked to throw rocks"
+    },
+    {
+      "id": 80,
+      "label": "\" you\"",
+      "label_share": 1.0,
+      "density": 0.0017659505208333333,
+      "n_examples": 20,
+      "top_example": " he went up to her and said, \"Hi, I'm Tim. Do[[ you]] want to play with"
+    },
+    {
+      "id": 147,
+      "label": "\" lived\"",
+      "label_share": 1.0,
+      "density": 0.0017491957720588236,
+      "n_examples": 20,
+      "top_example": "Once upon a time, there was a furry cat named Navy. Navy[[ lived]] in a small house"
+    },
+    {
+      "id": 349,
+      "label": "\" found\"",
+      "label_share": 0.8,
+      "density": 0.009110274969362744,
+      "n_examples": 20,
+      "top_example": " and Sam looked at each other and opened the box. Inside the box, they[[ found]] new toys to play"
+    },
+    {
+      "id": 545,
+      "label": "after \",\"",
+      "label_share": 1.0,
+      "density": 0.0069034352022058825,
+      "n_examples": 20,
+      "top_example": " and soft, just like a big, cozy bed. One sunny day,[[ Mimi]] found some seeds."
+    },
+    {
+      "id": 621,
+      "label": "\" a\"",
+      "label_share": 1.0,
+      "density": 4.787071078431372e-07,
+      "n_examples": 1,
+      "top_example": ", \"One, two, three...\" As Spot was counting,[[ a]] big serious bear came"
+    },
+    {
+      "id": 1048,
+      "label": "\" him\"",
+      "label_share": 0.5,
+      "density": 3.829656862745098e-06,
+      "n_examples": 8,
+      "top_example": " dog was too big and too strong. It knocked Tom down and started to bite[[ him]]. Tom cried out"
+    },
+    {
+      "id": 1300,
+      "label": "\" I\"",
+      "label_share": 0.5,
+      "density": 0.008261527267156862,
+      "n_examples": 20,
+      "top_example": " \"Can I have the ball?\" Lily asks. \"No, it[[ is]] mine!\" Ben says"
+    },
+    {
+      "id": 1334,
+      "label": "\" hug\"",
+      "label_share": 1.0,
+      "density": 0.0011522480085784314,
+      "n_examples": 20,
+      "top_example": " Emma was so excited, she ran up to the puppy and gave it a big[[ hug]]. She was so"
+    },
+    {
+      "id": 1662,
+      "label": "before \"r\"",
+      "label_share": 0.55,
+      "density": 0.0002958409926470588,
+      "n_examples": 20,
+      "top_example": "Tim dipped his thumb in blue paint. Then, he pressed his[[ th]]umb on the long"
+    },
+    {
+      "id": 1726,
+      "label": "\" with\"",
+      "label_share": 0.45,
+      "density": 0.0033710554534313727,
+      "n_examples": 20,
+      "top_example": " room. The cat saw the bird in the birdcage and wanted to play[[ with]] the bird. The"
+    },
+    {
+      "id": 1862,
+      "label": "\"et\"",
+      "label_share": 1.0,
+      "density": 0.0002647250306372549,
+      "n_examples": 20,
+      "top_example": "<\\|endoftext\\|>Once upon a time, there was a long cat named Y[[et]]. Yet"
+    }
+  ],
+  "settings": {
+    "examples_for_stats": 20,
+    "examples_for_ui": 8,
+    "distinct_context_tokens": 4,
+    "candidates": 1000,
+    "min_examples_for_metric": 10,
+    "seed": 0
+  },
+  "seconds": 434.8
+}

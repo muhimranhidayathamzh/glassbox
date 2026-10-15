@@ -1,0 +1,81 @@
+{
+  "files": {
+    "dtype": "float16",
+    "n_params": 2596992,
+    "weights_bytes": 5193984,
+    "source": {
+      "checkpoint": "runs/main/final.pt",
+      "step": 7000,
+      "val_loss": 1.8663968816399574
+    },
+    "tokenizer_bytes": 46866,
+    "manifest_bytes": 6976
+  },
+  "fp16_vs_fp32": {
+    "windows": 64,
+    "positions_per_window": 256,
+    "max_abs_diff": 0.016181468963623047,
+    "mean_abs_diff": 0.0011614303789584228,
+    "top1_agreement": 0.9996337890625,
+    "loss_fp32": 1.93746709785413,
+    "loss_fp16": 1.9374604339434367
+  },
+  "js_vs_torch": {
+    "max_abs_diff": 2.193450927734375e-05,
+    "mean_abs_diff": 1.3924664339900177e-06,
+    "top1_agreement": 1.0,
+    "windows": 8,
+    "positions": 2048,
+    "vocab": 4000,
+    "threshold": 0.001,
+    "pass": true
+  },
+  "tokenizer": {
+    "stories": 2000,
+    "tokens": 400878,
+    "identical": 2000,
+    "decode_identical": 2000
+  },
+  "greedy": {
+    "new_tokens": 300,
+    "n_ctx": 256,
+    "prompts": [
+      {
+        "prompt": "Once upon a time",
+        "new_tokens": 300,
+        "identical_prefix": 300
+      },
+      {
+        "prompt": "Tom and Sue went to the beach.",
+        "new_tokens": 300,
+        "identical_prefix": 300
+      },
+      {
+        "prompt": "The cat",
+        "new_tokens": 300,
+        "identical_prefix": 300
+      }
+    ]
+  },
+  "speed": {
+    "prompt_tokens": 128,
+    "new_tokens": 128,
+    "repeats": 3,
+    "prefill_tokens_per_s": 340.92231738749103,
+    "generate_tokens_per_s": 213.63933607570573,
+    "runtime": "node v24.15.0",
+    "cpu": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz"
+  },
+  "sae": {
+    "k": 8,
+    "n_features": 2048,
+    "layer": 2,
+    "windows": 8,
+    "positions": 2040,
+    "identical": 2040,
+    "near_tie_mismatches": 0,
+    "max_abs_resid_diff": 8.58306884765625e-06,
+    "max_abs_pre_diff": 1.52587890625e-05
+  },
+  "eval_seconds": 46.3
+}

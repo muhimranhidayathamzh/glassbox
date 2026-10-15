@@ -1,0 +1,277 @@
+"""Milestone 1 report: validation loss vs n-gram baselines, loss curve, and samples.
+
+    python -m glassbox.eval.lm_eval --run-dir runs/main
+
+Writes results/lm_eval.json and results/lm_eval.md. Every number in them comes from this script.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import platform
+import time
+from pathlib import Path
+
+import numpy as np
+import torch
+
+from ..tokenizer import EOT, BPETokenizer
+from ..train import load_checkpoint, load_tokens
+
+PROMPTS = [
+    EOT,  # unconditional: start of a new story
+    "Once upon a time",
+    "Lily and Ben were playing in the park. Suddenly,",
+    "Tom had a red ball. He",
+    "The little bird was sad because",
+]
+SAMPLE_SETTINGS = {"temperature": 0.8, "top_k": 50, "max_new_tokens": 200, "seed": 0}
+POSITION_BUCKETS = [(0, 1), (1, 8), (8, 32), (32, 128), (128, 256)]
+
+
+def eval_pairs(val: np.ndarray, n_tokens: int, T: int) -> tuple[np.ndarray, np.ndarray]:
+    """Non-overlapping windows over the first n_tokens of val: x[i] predicts y[i]."""
+    n_win = min(n_tokens, len(val) - 1) // T
+    flat = np.asarray(val[: n_win * T + 1], dtype=np.int64)
+    return flat[:-1].reshape(n_win, T), flat[1:].reshape(n_win, T)
+
+
+@torch.no_grad()
+def model_token_losses(model, x: np.ndarray, y: np.ndarray, batch_size: int = 32) -> np.ndarray:
+    out = np.empty(x.shape, dtype=np.float64)
+    for i in range(0, len(x), batch_size):
+        xb, yb = torch.from_numpy(x[i : i + batch_size]), torch.from_numpy(y[i : i + batch_size])
+        logits, _ = model(xb)
+        logp = torch.log_softmax(logits.double(), dim=-1)
+        out[i : i + batch_size] = -logp.gather(-1, yb[..., None])[..., 0].numpy()
+    return out
+
+
+def ngram_baselines(train: np.ndarray, x: np.ndarray, y: np.ndarray, V: int) -> tuple[dict, np.ndarray]:
+    """Uniform, add-one unigram, and Dirichlet-smoothed bigram cross-entropy (nats/token).
+
+    The bigram smoothing strength is tuned on the last 1M training tokens (held out from the
+    counts), never on validation data. Also returns per-token bigram losses (shape of y)."""
+    train = np.asarray(train, dtype=np.int64)
+    held, fit = train[-1_000_000:], train[:-1_000_000]
+
+    uni = np.bincount(fit, minlength=V).astype(np.float64)
+    p_uni = (uni + 1) / (uni.sum() + V)
+    big = np.bincount(fit[:-1] * V + fit[1:], minlength=V * V).astype(np.float64).reshape(V, V)
+    ctx = big.sum(1)
+
+    def bigram_nll(prev, nxt, mu):
+        return -np.log((big[prev, nxt] + mu * p_uni[nxt]) / (ctx[prev] + mu))
+
+    grid = [0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000]
+    held_nll = {mu: bigram_nll(held[:-1], held[1:], mu).mean() for mu in grid}
+    mu = min(held_nll, key=held_nll.get)
+
+    big_nll = bigram_nll(x, y, mu)
+    summary = {
+        "uniform": math.log(V),
+        "unigram": float(-np.log(p_uni[y]).mean()),
+        "bigram": float(big_nll.mean()),
+        "bigram_mu": mu,
+    }
+    return summary, big_nll
+
+
+def training_time(log: dict, pause_factor: float = 5.0) -> dict:
+    """Split logged wall time into active training and pauses (e.g. the laptop suspending).
+
+    A log interval counts as paused if it took more than `pause_factor` x the median interval;
+    its excess over the median is the paused time. Derived only from train_log.json."""
+    times = [0.0] + [e["elapsed_s"] for e in log["train"]]
+    durations = np.diff(times)
+    median = float(np.median(durations))
+    slow = durations[durations > pause_factor * median]
+    paused = float((slow - median).sum())
+    wall = float(log["total_elapsed_s"])
+    return {"wall_s": wall, "paused_s": paused, "active_s": wall - paused,
+            "n_pauses": int(slow.size), "median_interval_s": median}
+
+
+def cpu_name() -> str:
+    try:
+        import winreg
+
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0")
+        return winreg.QueryValueEx(key, "ProcessorNameString")[0].strip()
+    except (ImportError, OSError):
+        return platform.processor() or platform.machine()
+
+
+def generate_samples(model, tok: BPETokenizer) -> list[dict]:
+    s = SAMPLE_SETTINGS
+    samples = []
+    for i, prompt in enumerate(PROMPTS):
+        g = torch.Generator().manual_seed(s["seed"] + i)
+        idx = torch.tensor([tok.encode(prompt)])
+        out = model.generate(idx, s["max_new_tokens"], temperature=s["temperature"],
+                             top_k=s["top_k"], stop_token=tok.eot_id, generator=g)
+        new = out[0, idx.shape[1] :].tolist()
+        ended = bool(new) and new[-1] == tok.eot_id
+        text = tok.decode(new[:-1] if ended else new)
+        samples.append({"prompt": prompt, "completion": text, "new_tokens": len(new),
+                        "ended_with_eot": ended})
+    return samples
+
+
+def write_markdown(r: dict, path: Path) -> None:
+    m, d, t, b = r["model"], r["data"], r["training"], r["val_loss"]
+    lines = [
+        "# Milestone 1: tokenizer, model, training",
+        "",
+        "Generated by `python -m glassbox.eval.lm_eval`. Do not edit by hand.",
+        "",
+        "## Data",
+        "",
+        f"- Source: {d['source']} (license {d['license']})",
+        f"- Train: {d['train']['kept']:,} stories, {d['train']['tokens']:,} tokens "
+        f"(dropped {d['train']['dropped_non_ascii']:,} non-ASCII, "
+        f"{d['train']['dropped_truncated_tail']} truncated)",
+        f"- Val: {d['val']['kept']:,} stories, {d['val']['tokens']:,} tokens "
+        f"(dropped {d['val']['dropped_non_ascii']:,} non-ASCII, "
+        f"{d['val']['dropped_truncated_tail']} truncated)",
+        f"- Tokenizer: byte-level BPE, vocab {d['vocab_size']:,}, trained on "
+        f"{d['tokenizer_train_chars']:,} chars in {d['tokenizer_train_seconds']} s; "
+        f"{d['val']['chars_per_token']} chars/token on val",
+        "",
+        "## Model",
+        "",
+        f"- {m['n_layer']} layers, d_model {m['d_model']}, {m['n_head']} heads, d_mlp {m['d_mlp']}, "
+        f"context {m['n_ctx']}, tied embeddings",
+        f"- Parameters: {r['n_params']:,} total, {r['n_params_non_embedding']:,} excluding embeddings",
+        "",
+        "## Training",
+        "",
+        f"- {t['steps']:,} steps x {t['batch_size']} x {m['n_ctx']} tokens = {t['tokens_seen']:,} "
+        f"tokens ({t['epochs']:.2f} epochs of the train split)",
+        f"- AdamW, lr {t['lr']} -> {t['min_lr']} (warmup {t['warmup_steps']}, cosine), "
+        f"weight decay {t['weight_decay']}, seed {t['seed']}",
+        f"- Active training time: {t['time']['active_s'] / 60:.1f} min on CPU "
+        f"({t['tokens_per_second']:,.0f} tokens/s, {t['torch_threads']} threads, {t['cpu']})",
+        f"- Wall time {t['time']['wall_s'] / 60:.1f} min, of which {t['time']['paused_s'] / 60:.1f} min "
+        f"paused ({t['time']['n_pauses']} log interval(s) longer than 5x the median "
+        f"{t['time']['median_interval_s']:.0f} s, e.g. the machine sleeping)",
+        f"- {len(t['replay_checkpoints'])} log-spaced checkpoints: steps {t['replay_checkpoints']}",
+        "",
+        f"Val loss at the replay checkpoints, on {r['train_eval_windows']} fixed, evenly spaced val windows "
+        "(see `train_log.json`). The baseline table below uses a larger window set, so its model "
+        "number differs slightly from the last row here.",
+        "",
+        "| step | tokens | val loss |",
+        "|---:|---:|---:|",
+    ]
+    lines += [f"| {e['step']:,} | {e['tokens']:,} | {e['loss']:.4f} |" for e in r["val_curve"]]
+    lines += [
+        "",
+        "## Validation loss vs baselines",
+        "",
+        f"Cross-entropy in nats/token on the first {r['eval_tokens']:,} val tokens "
+        f"({r['eval_windows']:,} non-overlapping windows of {m['n_ctx']}). "
+        "All rows score exactly the same target tokens.",
+        "",
+        "| predictor | loss | perplexity |",
+        "|---|---:|---:|",
+        f"| uniform over vocab | {b['uniform']:.4f} | {math.exp(b['uniform']):,.1f} |",
+        f"| unigram (add-one) | {b['unigram']:.4f} | {math.exp(b['unigram']):,.1f} |",
+        f"| bigram (Dirichlet mu={b['bigram_mu']}) | {b['bigram']:.4f} | {math.exp(b['bigram']):,.1f} |",
+        f"| **glassbox model** | **{b['model']:.4f}** | **{math.exp(b['model']):,.2f}** |",
+        "",
+        "Model loss by position in the window (later positions have more context):",
+        "",
+        "| positions | model loss | bigram loss |",
+        "|---|---:|---:|",
+    ]
+    lines += [f"| {p['range']} | {p['model']:.4f} | {p['bigram']:.4f} |" for p in r["loss_by_position"]]
+    s = r["sample_settings"]
+    lines += [
+        "",
+        "## Samples",
+        "",
+        f"Real model output, not cherry-picked: one sample per prompt, temperature {s['temperature']}, "
+        f"top-k {s['top_k']}, at most {s['max_new_tokens']} new tokens, "
+        f"seed {s['seed']} + prompt index. `<|endoftext|>` as prompt = unconditional.",
+        "",
+    ]
+    for smp in r["samples"]:
+        end = "" if smp["ended_with_eot"] else " *(hit token limit)*"
+        lines += [f"**Prompt:** `{smp['prompt']}`{end}", "", "```text",
+                  (smp["prompt"] if smp["prompt"] != EOT else "") + smp["completion"], "```", ""]
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def main() -> None:
+    p = argparse.ArgumentParser()
+    p.add_argument("--run-dir", type=Path, default=Path("runs/main"))
+    p.add_argument("--data-dir", type=Path, default=Path("data/tinystories"))
+    p.add_argument("--results-dir", type=Path, default=Path("results"))
+    p.add_argument("--eval-tokens", type=int, default=1 << 20)
+    a = p.parse_args()
+
+    t0 = time.time()
+    tok = BPETokenizer.load(a.data_dir / "tokenizer.json")
+    model, ckpt = load_checkpoint(a.run_dir / "final.pt")
+    log = json.loads((a.run_dir / "train_log.json").read_text(encoding="utf-8"))
+    data = json.loads((a.data_dir / "data_stats.json").read_text(encoding="utf-8"))
+    val, train = load_tokens(a.data_dir / "val.bin"), load_tokens(a.data_dir / "train.bin")
+    cfg, mcfg = log["config"], model.cfg
+    V, T = mcfg.vocab_size, mcfg.n_ctx
+
+    x, y = eval_pairs(val, a.eval_tokens, T)
+    model_nll = model_token_losses(model, x, y)
+    baselines, big_nll = ngram_baselines(train, x, y, V)
+
+    steps = cfg["max_steps"]
+    tokens_seen = steps * cfg["batch_size"] * T
+    times = training_time(log)
+    report = {
+        "checkpoint": str(a.run_dir / "final.pt"),
+        "model": mcfg.to_dict(),
+        "n_params": model.num_params(),
+        "n_params_non_embedding": model.num_params(include_embeddings=False),
+        "data": data,
+        "training": {
+            "steps": steps,
+            "batch_size": cfg["batch_size"],
+            "tokens_seen": tokens_seen,
+            "epochs": tokens_seen / data["train"]["tokens"],
+            "lr": cfg["lr"], "min_lr": cfg["min_lr"], "warmup_steps": cfg["warmup_steps"],
+            "weight_decay": cfg["weight_decay"], "seed": cfg["seed"],
+            "time": times,
+            "tokens_per_second": tokens_seen / times["active_s"],
+            "cpu": cpu_name(),
+            "torch_threads": cfg["threads"] or torch.get_num_threads(),
+            "replay_checkpoints": log["replay_steps"],
+            "final_train_loss": log["train"][-1]["loss"],
+        },
+        "val_curve": [e for e in log["val"] if e["step"] in set(log["replay_steps"])],
+        "train_eval_windows": cfg["eval_windows"],
+        "eval_tokens": int(x.size),
+        "eval_windows": int(x.shape[0]),
+        "val_loss": {"model": float(model_nll.mean()), **baselines},
+        "loss_by_position": [
+            {"range": f"{lo}-{hi - 1}", "model": float(model_nll[:, lo:hi].mean()),
+             "bigram": float(big_nll[:, lo:hi].mean())}
+            for lo, hi in POSITION_BUCKETS if hi <= T
+        ],
+        "sample_settings": SAMPLE_SETTINGS,
+        "samples": generate_samples(model, tok),
+    }
+    report["eval_seconds"] = round(time.time() - t0, 1)
+
+    a.results_dir.mkdir(parents=True, exist_ok=True)
+    (a.results_dir / "lm_eval.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    write_markdown(report, a.results_dir / "lm_eval.md")
+    b = report["val_loss"]
+    print(f"val loss: model {b['model']:.4f} | bigram {b['bigram']:.4f} | "
+          f"unigram {b['unigram']:.4f} | uniform {b['uniform']:.4f}")
+    print(f"wrote {a.results_dir / 'lm_eval.json'} and {a.results_dir / 'lm_eval.md'}")
+
+
+if __name__ == "__main__":
+    main()

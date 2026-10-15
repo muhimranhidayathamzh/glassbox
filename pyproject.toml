@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "glassbox"
+version = "0.1.0"
+description = "A small LLM built from scratch, with tools to inspect, steer and trace how it thinks."
+requires-python = ">=3.10"
+dependencies = ["torch>=2.1", "numpy"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["python"]

@@ -1,0 +1,9 @@
+{
+  "name": "glassbox-web",
+  "private": true,
+  "type": "module",
+  "description": "Static web demo and inference engine for the glassbox model. No dependencies, no build step.",
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\""
+  }
+}

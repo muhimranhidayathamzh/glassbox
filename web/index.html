@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Glassbox · a tiny language model in your browser</title>
+  <meta name="description" content="A small transformer language model built from scratch, running entirely in the browser.">
+  <link rel="stylesheet" href="ui/style.css">
+  <script type="module" src="ui/app.js"></script>
+</head>
+<body>
+  <header>
+    <nav class="nav"><a href="index.html" aria-current="page">Generate</a><a href="microscope.html">Microscope</a></nav>
+    <h1>Glassbox</h1>
+    <p class="lede">A small language model (<span id="param-count">&hellip;</span> parameters), built from scratch and
+      running entirely in your browser. No server, no API key.</p>
+  </header>
+
+  <main>
+    <section class="panel controls">
+      <label for="prompt" class="field-label">Start of a story</label>
+      <textarea id="prompt" rows="3" spellcheck="false">Once upon a time</textarea>
+      <div class="chips" id="examples" aria-label="Example prompts"></div>
+
+      <div class="sliders">
+        <label>Temperature <output id="temperature-out"></output>
+          <input type="range" id="temperature" min="0" max="1.5" step="0.05" value="0.8">
+        </label>
+        <label>Top-k <output id="topk-out"></output>
+          <input type="range" id="topk" min="0" max="100" step="1" value="50">
+        </label>
+        <label>Max new tokens <output id="maxtok-out"></output>
+          <input type="range" id="maxtok" min="16" max="512" step="16" value="208">
+        </label>
+        <label>Seed
+          <span class="seed">
+            <input type="number" id="seed" value="0" min="0" step="1">
+            <button type="button" id="reseed" title="Random seed" aria-label="Random seed">&#x21bb;</button>
+          </span>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="generate" class="primary" disabled>Loading model&hellip;</button>
+        <button id="stop" hidden>Stop</button>
+        <label class="toggle"><input type="checkbox" id="show-tokens"> Show tokens</label>
+      </div>
+      <progress id="progress" max="1" value="0"></progress>
+      <p id="status" role="status"></p>
+    </section>
+
+    <section class="panel">
+      <div id="output" class="story" aria-live="polite"></div>
+      <p id="stats"></p>
+      <p class="legend">With <em>Show tokens</em> on, each token is outlined and shaded by how surprising it was to the
+        model (darker = less likely). Hover or tap a token to see its probability and the alternatives.</p>
+    </section>
+
+    <section class="notes">
+      <p>The model was trained on <a href="https://huggingface.co/datasets/roneneldan/TinyStories">TinyStories</a>
+        (simple English stories for young children, license CDLA-Sharing-1.0), so that is the only kind of text it
+        knows. It is not a chatbot: it continues whatever you write.</p>
+      <p>Temperature 0 always picks the most likely token. Top-k 0 means no top-k filter. The same seed and settings
+        always give the same story.</p>
+    </section>
+  </main>
+
+  <pre id="selftest" hidden></pre>
+</body>
+</html>

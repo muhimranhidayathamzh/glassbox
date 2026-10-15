@@ -1,0 +1,305 @@
+{
+  "checkpoint": "runs\\main\\final.pt",
+  "model": {
+    "vocab_size": 4000,
+    "n_ctx": 256,
+    "d_model": 192,
+    "n_layer": 4,
+    "n_head": 4,
+    "d_mlp": 768,
+    "ln_eps": 1e-05
+  },
+  "n_params": 2596992,
+  "n_params_non_embedding": 1779840,
+  "data": {
+    "source": "roneneldan/TinyStories TinyStoriesV2-GPT4-train.txt (first 150 MiB) / TinyStoriesV2-GPT4-valid.txt",
+    "license": "CDLA-Sharing-1.0",
+    "vocab_size": 4000,
+    "tokenizer_train_stories": 40000,
+    "tokenizer_train_chars": 32718403,
+    "tokenizer_train_seconds": 2.54,
+    "val": {
+      "segments": 27630,
+      "dropped_truncated_tail": 1,
+      "dropped_non_ascii": 726,
+      "kept": 26903,
+      "tokens": 5434371,
+      "chars": 21461834,
+      "chars_per_token": 3.949,
+      "encode_seconds": 2.2
+    },
+    "train": {
+      "segments": 191855,
+      "dropped_truncated_tail": 1,
+      "dropped_non_ascii": 5103,
+      "kept": 186751,
+      "tokens": 37985417,
+      "chars": 149987501,
+      "chars_per_token": 3.949,
+      "encode_seconds": 15.1
+    }
+  },
+  "training": {
+    "steps": 7000,
+    "batch_size": 16,
+    "tokens_seen": 28672000,
+    "epochs": 0.7548159863560271,
+    "lr": 0.002,
+    "min_lr": 0.0002,
+    "warmup_steps": 200,
+    "weight_decay": 0.1,
+    "seed": 1337,
+    "time": {
+      "wall_s": 26860.9,
+      "paused_s": 16135.7,
+      "active_s": 10725.2,
+      "n_pauses": 1,
+      "median_interval_s": 72.99999999999989
+    },
+    "tokens_per_second": 2673.3301010703763,
+    "cpu": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+    "torch_threads": 4,
+    "replay_checkpoints": [
+      0,
+      1,
+      2,
+      3,
+      5,
+      7,
+      11,
+      17,
+      25,
+      37,
+      56,
+      84,
+      125,
+      187,
+      280,
+      418,
+      626,
+      936,
+      1400,
+      2093,
+      3130,
+      4681,
+      7000
+    ],
+    "final_train_loss": 1.8625053000450134
+  },
+  "val_curve": [
+    {
+      "step": 0,
+      "loss": 8.324267387390137,
+      "tokens": 0,
+      "elapsed_s": 7.3
+    },
+    {
+      "step": 1,
+      "loss": 8.307454466819763,
+      "tokens": 4096,
+      "elapsed_s": 16.5
+    },
+    {
+      "step": 2,
+      "loss": 8.274279773235321,
+      "tokens": 8192,
+      "elapsed_s": 29.2
+    },
+    {
+      "step": 3,
+      "loss": 8.225744843482971,
+      "tokens": 12288,
+      "elapsed_s": 40.1
+    },
+    {
+      "step": 5,
+      "loss": 8.095884025096893,
+      "tokens": 20480,
+      "elapsed_s": 54.7
+    },
+    {
+      "step": 7,
+      "loss": 7.968908488750458,
+      "tokens": 28672,
+      "elapsed_s": 68.5
+    },
+    {
+      "step": 11,
+      "loss": 7.804170519113541,
+      "tokens": 45056,
+      "elapsed_s": 84.7
+    },
+    {
+      "step": 17,
+      "loss": 7.613883167505264,
+      "tokens": 69632,
+      "elapsed_s": 102.7
+    },
+    {
+      "step": 25,
+      "loss": 7.218616634607315,
+      "tokens": 102400,
+      "elapsed_s": 126.2
+    },
+    {
+      "step": 37,
+      "loss": 6.484118729829788,
+      "tokens": 151552,
+      "elapsed_s": 158.5
+    },
+    {
+      "step": 56,
+      "loss": 5.425814151763916,
+      "tokens": 229376,
+      "elapsed_s": 189.3
+    },
+    {
+      "step": 84,
+      "loss": 4.570074439048767,
+      "tokens": 344064,
+      "elapsed_s": 228.6
+    },
+    {
+      "step": 125,
+      "loss": 4.131147056818008,
+      "tokens": 512000,
+      "elapsed_s": 283.0
+    },
+    {
+      "step": 187,
+      "loss": 3.8997213393449783,
+      "tokens": 765952,
+      "elapsed_s": 375.4
+    },
+    {
+      "step": 280,
+      "loss": 3.582774892449379,
+      "tokens": 1146880,
+      "elapsed_s": 544.8
+    },
+    {
+      "step": 418,
+      "loss": 3.254897713661194,
+      "tokens": 1712128,
+      "elapsed_s": 756.6
+    },
+    {
+      "step": 626,
+      "loss": 2.9892894327640533,
+      "tokens": 2564096,
+      "elapsed_s": 1094.4
+    },
+    {
+      "step": 936,
+      "loss": 2.742886036634445,
+      "tokens": 3833856,
+      "elapsed_s": 1527.9
+    },
+    {
+      "step": 1400,
+      "loss": 2.543593481183052,
+      "tokens": 5734400,
+      "elapsed_s": 2172.7
+    },
+    {
+      "step": 2093,
+      "loss": 2.3562649488449097,
+      "tokens": 8572928,
+      "elapsed_s": 3162.3
+    },
+    {
+      "step": 3130,
+      "loss": 2.1794891953468323,
+      "tokens": 12820480,
+      "elapsed_s": 4559.9
+    },
+    {
+      "step": 4681,
+      "loss": 2.001547783613205,
+      "tokens": 19173376,
+      "elapsed_s": 7402.9
+    },
+    {
+      "step": 7000,
+      "loss": 1.8663968816399574,
+      "tokens": 28672000,
+      "elapsed_s": 26860.8
+    }
+  ],
+  "train_eval_windows": 256,
+  "eval_tokens": 1048576,
+  "eval_windows": 4096,
+  "val_loss": {
+    "model": 1.901529189057984,
+    "uniform": 8.294049640102028,
+    "unigram": 5.868566626670444,
+    "bigram": 3.5278709776176864,
+    "bigram_mu": 100
+  },
+  "loss_by_position": [
+    {
+      "range": "0-0",
+      "model": 3.8881222959813497,
+      "bigram": 3.560996793577536
+    },
+    {
+      "range": "1-7",
+      "model": 2.7292167787682007,
+      "bigram": 3.5200575149298166
+    },
+    {
+      "range": "8-31",
+      "model": 2.132130824332685,
+      "bigram": 3.530137219642221
+    },
+    {
+      "range": "32-127",
+      "model": 1.8683621510092043,
+      "bigram": 3.5253883201329432
+    },
+    {
+      "range": "128-255",
+      "model": 1.8223822372704435,
+      "bigram": 3.5294765536551997
+    }
+  ],
+  "sample_settings": {
+    "temperature": 0.8,
+    "top_k": 50,
+    "max_new_tokens": 200,
+    "seed": 0
+  },
+  "samples": [
+    {
+      "prompt": "<|endoftext|>",
+      "completion": "Once upon a time, there was a little boy named Tim. Tim loved to play with his toy cars. One day, he found a big box. The box was very messy. Tim was sad, but he did not want to clean up his room.\nTim had an idea. He would take his cars to the toy car and make it clean. He saw a big box and put them in the box. The box was broken. Tim was sad, but he knew the box was not working.\nTim put his toys away and went to get his toy car. He went to his mom and said, \"Mom, I want to play with my truck. It is very dirty. I'm sorry I took my toy car.\" His mom was so happy and surprised. She said, \"Thank you, Tim! You are a good friend. We can fix things together.\" She picked up Tim's car and gave it to him. Tim was happy that he could play with his toy",
+      "new_tokens": 200,
+      "ended_with_eot": false
+    },
+    {
+      "prompt": "Once upon a time",
+      "completion": ", there was a little girl named Lily. Lily had a friend named Tim. They loved to play together. One day, they saw a big box of copper in the yard. Lily and Tim wanted to go inside the box.\nThey played with the copper and made a big snowman. They had so much fun. Then, Lily said, \"Let's go inside the house!\" Tim felt happy and said, \"Okay, let's go inside and play!\"\nThe next day, Lily and Tim went back inside the house. They saw the tall cat and waved her head. \"Good job, Lily!\" said the cat. Lily smiled and they both played together, feeling happy and happy.",
+      "new_tokens": 143,
+      "ended_with_eot": true
+    },
+    {
+      "prompt": "Lily and Ben were playing in the park. Suddenly,",
+      "completion": " the sun came out and they started to set. Lily and Ben could see each other and laughed. They were having a great time and playing in the park.\nAfter playing for a while, Lily found a big puddle of mud. She was so happy to have a clean, and she and Ben went home to show their moms to their friends. Her friends were happy to see their new friend and the big tree. Lily was very happy that she and Sam had a great day.",
+      "new_tokens": 98,
+      "ended_with_eot": true
+    },
+    {
+      "prompt": "Tom had a red ball. He",
+      "completion": " loved to play with his ball. One day, Tom saw a big red ball in the yard. It was a blue ball. Tom wanted to play with the blue ball, so he went down the hill to play.\nTom tried to pull the blue ball away, but the blue ball stayed in the park. Tom was sad. Then, a kind man came by. He saw Tom trying to reach the blue ball. The man gave the blue ball back to Tom. Tom was happy and thanked the kind man. The man gave Tom a hug. They both played with the blue ball together, and they became good friends.",
+      "new_tokens": 127,
+      "ended_with_eot": true
+    },
+    {
+      "prompt": "The little bird was sad because",
+      "completion": " he was lost. Tim wanted to help the bird. He had an idea. He found a big rope with the kite. The small bird was happy.\nThe small bird told the small bird, \"I will help you find your kite.\" The small bird was happy too. They went back to the big tree and found a string. The small bird was happy. They became best friends.",
+      "new_tokens": 80,
+      "ended_with_eot": true
+    }
+  ],
+  "eval_seconds": 271.3
+}
