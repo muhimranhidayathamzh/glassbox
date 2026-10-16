@@ -324,7 +324,7 @@ def main() -> None:
     formation = {
         "from_step": steps[i], "to_step": steps[i + 1], "score_from": best[i], "score_to": best[i + 1],
         "final_head": ckpts[-1]["best_induction_head"], "final_score": best[-1],
-        "final_prev_heads": [f"L{l}.H{h}" for l, h in zip(*np.nonzero(final_prev >= INDUCTION_THRESHOLD))],
+        "final_prev_heads": [f"L{layer}.H{h}" for layer, h in zip(*np.nonzero(final_prev >= INDUCTION_THRESHOLD))],
         "prev_head_step": first_step_above(steps, [k["best_prev"] for k in ckpts], INDUCTION_THRESHOLD),
         "induction_step": first_step_above(steps, best, INDUCTION_THRESHOLD),
         "second_copy_from": ckpts[i]["repeat_loss_second"], "second_copy_to": ckpts[i + 1]["repeat_loss_second"],

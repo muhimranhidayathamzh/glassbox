@@ -108,7 +108,7 @@ def reconstruction_stats(model, layer: int, x: np.ndarray, saes: dict, mean, com
             pca_sse[name] += (r64 - pca.double()).pow(2).sum().item()
     sst = sum_sq - (sum_x.pow(2).sum().item() / n)
     out = {}
-    for name, sae in saes.items():
+    for name in saes:
         density = fired[name].double() / n
         out[name] = {
             "variance_explained": 1 - sse[name] / sst,
@@ -159,8 +159,9 @@ def write_markdown(r: dict, path: Path) -> None:
     ]
     for s in r["saes"]:
         lines.append(
-            f"| {s['k']} | {s['variance_explained']:.3f} | {s['l0']:.2f} | {s['dead']} ({s['dead'] / r['n_features']:.1%}) "
-            f"| {s['dense']} | {s['loss_spliced']:.4f} | +{s['loss_increase']:.4f} (+{s['relative_loss_increase']:.1%}) "
+            f"| {s['k']} | {s['variance_explained']:.3f} | {s['l0']:.2f} "
+            f"| {s['dead']} ({s['dead'] / r['n_features']:.1%}) | {s['dense']} | {s['loss_spliced']:.4f} "
+            f"| +{s['loss_increase']:.4f} (+{s['relative_loss_increase']:.1%}) "
             f"| {s['loss_recovered']:.1%} "
             f"| {s['pca_variance_explained']:.3f} | +{s['pca_loss_increase']:.4f} | {s['pca_loss_recovered']:.1%} "
             f"| {s['train_minutes']:.1f} min |"

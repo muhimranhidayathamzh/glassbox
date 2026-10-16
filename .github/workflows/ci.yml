@@ -1,0 +1,59 @@
+name: CI and Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install (CPU-only torch, same versions as development)
+        run: |
+          pip install torch==2.2.1 --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy==1.26.4 pytest ruff
+          pip install --no-deps -e .
+      - name: Lint
+        run: |
+          ruff check python tests
+          for f in $(git ls-files 'web/*.js' 'web/*.mjs'); do node --check "$f"; done
+      - name: README results match results/
+        run: python -m glassbox.eval.summary --check
+      - name: Tests (Python, JS unit tests, JS-vs-PyTorch parity)
+        run: pytest -q
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Site = web/ without tests and dev tools
+        run: rsync -a --exclude test --exclude tools --exclude package.json web/ _site/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

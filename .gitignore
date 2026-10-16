@@ -6,3 +6,4 @@ __pycache__/
 # Downloaded and generated data, checkpoints (reproducible via the commands in README)
 data/
 runs/
+docs/demo/frames/

@@ -122,7 +122,7 @@ def test_resid_hooks_read_and_replace_the_residual_stream(model):
             return x
         return hook
 
-    hooked, _ = model(idx, resid_hooks={l: capture(l) for l in range(TINY.n_layer + 1)})
+    hooked, _ = model(idx, resid_hooks={layer: capture(layer) for layer in range(TINY.n_layer + 1)})
     torch.testing.assert_close(hooked, plain, rtol=0, atol=0)
     for layer in range(TINY.n_layer + 1):
         torch.testing.assert_close(model.resid_at(idx, layer), seen[layer], rtol=0, atol=0)

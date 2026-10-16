@@ -198,8 +198,8 @@ def extract(model, sae, examples: list[Example], batch: int = 16) -> Features:
             y += [e.labels[t] for t in keep]
             words += [e.next_word[t] for t in keep]
             sent += [e.next_sentence_start[t] for t in keep]
-    return Features(np.concatenate(resid), np.concatenate(last), np.concatenate(cidx), np.concatenate(cval), np.concatenate(prev2),
-                    np.array(y), words, np.array(sent))
+    return Features(np.concatenate(resid), np.concatenate(last), np.concatenate(cidx), np.concatenate(cval),
+                    np.concatenate(prev2), np.array(y), words, np.array(sent))
 
 
 # ----------------------------------------------------------------------------- classifiers
@@ -473,7 +473,8 @@ def main() -> None:
     strict_th = recall_threshold(sae_score(fc), fc.y, STRICT_RECALL)
     added = [
         ("SAE-feature classifier, strict", "before the token is chosen", lambda f: sae_score(f) >= strict_th),
-        ("regex or SAE guard", "both", lambda f: regex_flags(f, names) | (sae_score(f) >= thresholds["SAE-feature classifier"])),
+        ("regex or SAE guard", "both",
+         lambda f: regex_flags(f, names) | (sae_score(f) >= thresholds["SAE-feature classifier"])),
         ("regex or SAE guard, strict", "both", lambda f: regex_flags(f, names) | (sae_score(f) >= strict_th)),
     ]
     last_th = best_threshold(probe_last.scores(fc), fc.y)

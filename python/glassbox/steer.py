@@ -148,10 +148,12 @@ def write_markdown(r: dict, path: Path) -> None:
     lines += [header, "|---|---|---:|" + "---:|" * len(r["alphas"])]
     for c in r["concepts"]:
         if c["feature"] is None:
-            lines.append(f"| {c['word']} | no feature matches the rule | {c['alpha_0']:.0%} |" + " - |" * len(r["alphas"]))
+            lines.append(f"| {c['word']} | no feature matches the rule | {c['alpha_0']:.0%} |"
+                         + " - |" * len(r["alphas"]))
             continue
         cells = [f"{c['feature_mention'][i]:.0%} ({c['random_mention'][i]:.0%})" for i in range(len(r["alphas"]))]
-        lines.append(f"| {c['word']} | #{c['feature']} `{c['label']}` | {c['alpha_0']:.0%} | " + " | ".join(cells) + " |")
+        lines.append(f"| {c['word']} | #{c['feature']} `{c['label']}` | {c['alpha_0']:.0%} | "
+                     + " | ".join(cells) + " |")
     ex = r["example"]
     lines += [
         "",
@@ -226,9 +228,10 @@ def main() -> None:
                 example = {"word": word, "alpha": ALPHAS[mid], "plain": PROMPTS[0] + base["texts"][0],
                            "steered": PROMPTS[0] + runs[mid]["texts"][0]}
         concepts.append(c)
-        print(f"{word}: feature {c['feature']} | alpha 0 {c['alpha_0']:.0%} | feature "
-              f"{[f'{v:.0%}' for v in c.get('feature_mention', [])]} | random {[f'{v:.0%}' for v in c['random_mention']]}",
-              flush=True)
+        feature_rates = [f"{v:.0%}" for v in c.get("feature_mention", [])]
+        random_rates = [f"{v:.0%}" for v in c["random_mention"]]
+        print(f"{word}: feature {c['feature']} | alpha 0 {c['alpha_0']:.0%} | feature {feature_rates} "
+              f"| random {random_rates}", flush=True)
 
     steered = [c for c in concepts if c["feature"] is not None]
     summary = {

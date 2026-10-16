@@ -123,5 +123,6 @@ def test_generate_batch_is_reproducible_and_steering_changes_it(tiny):
     a = generate_batch(model, [1, 2, 3], n=4, seed=5)
     assert a == generate_batch(model, [1, 2, 3], n=4, seed=5)
     assert all(len(r) == 60 for r in a)
-    steered = generate_batch(model, [1, 2, 3], n=4, seed=5, hooks={1: steering_hook(3.0 * torch.randn(16, generator=torch.Generator().manual_seed(0)))})
+    vec = 3.0 * torch.randn(16, generator=torch.Generator().manual_seed(0))
+    steered = generate_batch(model, [1, 2, 3], n=4, seed=5, hooks={1: steering_hook(vec)})
     assert steered != a

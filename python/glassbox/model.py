@@ -155,9 +155,9 @@ class GPT(nn.Module):
         the (possibly modified) residual; this is how activations are read, replaced or steered."""
         hooks = resid_hooks or {}
         x = self.embed(idx)
-        for l, block in enumerate(self.blocks):
-            if l in hooks:
-                x = hooks[l](x)
+        for layer, block in enumerate(self.blocks):
+            if layer in hooks:
+                x = hooks[layer](x)
             x = block(x)
         if self.cfg.n_layer in hooks:
             x = hooks[self.cfg.n_layer](x)

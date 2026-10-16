@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from glassbox.guard import (
-    recall_threshold,
     BagLR,
     Features,
     best_single_feature,
@@ -12,6 +11,7 @@ from glassbox.guard import (
     label_story,
     metrics,
     name_spans,
+    recall_threshold,
     regex_flags,
     sentence_start,
     single_feature_scores,

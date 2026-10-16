@@ -284,7 +284,8 @@ def main() -> None:
             "features_with_enough_examples": len(labelled),
             "too_rare": len(alive_feats) - len(labelled),
             "kind": dict(Counter(f["label_kind"] for f in labelled)),
-            "share_ge_0.8": int((shares >= 0.8).sum()), "share_0.5_to_0.8": int(((shares >= 0.5) & (shares < 0.8)).sum()),
+            "share_ge_0.8": int((shares >= 0.8).sum()),
+            "share_0.5_to_0.8": int(((shares >= 0.5) & (shares < 0.8)).sum()),
             "share_lt_0.5": int((shares < 0.5).sum()),
         },
         "random_sample": [
