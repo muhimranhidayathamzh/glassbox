@@ -5,12 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Glassbox · training replay</title>
   <meta name="description" content="Replay the training of a small language model: loss, attention heads, and samples per checkpoint.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Glassbox">
+  <meta property="og:title" content="Glassbox: replaying the training of a small language model">
+  <meta property="og:description" content="Slide through the checkpoints saved during training to watch the loss fall, the attention heads change and the stories improve.">
+  <meta property="og:image" content="https://muhimranhidayathamzh.github.io/glassbox/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://muhimranhidayathamzh.github.io/glassbox/replay.html">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="ui/style.css">
   <script type="module" src="ui/replay.js"></script>
 </head>
 <body>
   <header>
-    <nav class="nav"><a href="index.html">Generate</a><a href="microscope.html">Microscope</a><a href="replay.html" aria-current="page">Replay</a></nav>
+    <nav class="nav"><a href="index.html">Generate</a><a href="microscope.html">Microscope</a><a href="replay.html" aria-current="page">Replay</a><a href="case-study.html">Case study</a></nav>
     <h1>Training replay</h1>
     <p class="lede">The model was saved at <span id="n-ckpt">&hellip;</span> moments during training, spaced
       logarithmically. Slide through them to see the loss fall, the attention heads change, and the stories improve.</p>

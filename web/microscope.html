@@ -5,12 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Glassbox · feature microscope</title>
   <meta name="description" content="Look inside a small language model: sparse autoencoder features, live in the browser.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Glassbox">
+  <meta property="og:title" content="Glassbox: a feature microscope for a small language model">
+  <meta property="og:description" content="Type any text and see which sparse autoencoder features fire on each token, and which of them made the model predict the next word.">
+  <meta property="og:image" content="https://muhimranhidayathamzh.github.io/glassbox/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://muhimranhidayathamzh.github.io/glassbox/microscope.html">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="ui/style.css">
   <script type="module" src="ui/microscope.js"></script>
 </head>
 <body>
   <header>
-    <nav class="nav"><a href="index.html">Generate</a><a href="microscope.html" aria-current="page">Microscope</a><a href="replay.html">Replay</a></nav>
+    <nav class="nav"><a href="index.html">Generate</a><a href="microscope.html" aria-current="page">Microscope</a><a href="replay.html">Replay</a><a href="case-study.html">Case study</a></nav>
     <h1>Feature microscope</h1>
     <p class="lede">A sparse autoencoder (SAE) splits the model's internal state at one layer into
       <span id="n-features">&hellip;</span> features. Type any text, click a token, and see which features fire on it.

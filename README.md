@@ -1,5 +1,9 @@
 # Glassbox
 
+[![CI and Pages](https://github.com/muhimranhidayathamzh/glassbox/actions/workflows/ci.yml/badge.svg)](https://github.com/muhimranhidayathamzh/glassbox/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/demo-live-3d5bd9)](https://muhimranhidayathamzh.github.io/glassbox/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 **A small language model built from scratch, taken apart with 2026-era interpretability tools, and
 turned into a measurable product feature.** Everything runs on a laptop CPU, and the demo runs entirely
 in your browser: no server, no API key.
@@ -7,6 +11,9 @@ in your browser: no server, no API key.
 **[Open the live demo](https://muhimranhidayathamzh.github.io/glassbox/)**: [Generate](https://muhimranhidayathamzh.github.io/glassbox/) ·
 [Microscope](https://muhimranhidayathamzh.github.io/glassbox/microscope.html) ·
 [Replay](https://muhimranhidayathamzh.github.io/glassbox/replay.html)
+
+**[Read the case study](https://muhimranhidayathamzh.github.io/glassbox/case-study.html)**: what was built, what worked, what did not, and how the
+numbers were kept honest.
 
 ![Demo: generating a story, inspecting features, and replaying training](docs/demo.gif)
 
@@ -101,9 +108,12 @@ for k in 16 32; do python -m glassbox.export sae --sae runs/sae_k$k/sae.pt --out
 python -m glassbox.eval.sae_index
 python -m glassbox.guard_layers    # may move the page's guard (web/model/guard.json) to another SAE
 
-# README results table, and the demo GIF (needs Chrome and Pillow, and the site served on port 8765)
-python -m glassbox.eval.summary
+# README results table, case study page and post drafts (docs/linkedin_post_*.md), all from results/
+python -m glassbox.eval.summary && python -m glassbox.eval.writeup
+
+# demo GIF, microscope screenshot and link preview (need Chrome and Pillow, and the site served on port 8765)
 node docs/demo/frames.mjs http://127.0.0.1:8765/ docs/demo/frames && python docs/demo/make_gif.py docs/demo/frames docs/demo.gif
+node docs/demo/og.mjs http://127.0.0.1:8765/
 ```
 
 ## Tests and CI
@@ -118,7 +128,8 @@ The parity tests run the JavaScript engine (through Node.js) and PyTorch on the 
 logits within 1e-3, identical tokenization and greedy generation (including past the context window),
 matching SAE activations, steered generation, ablation effects and guard scores. They run on a small
 random model every time and on the shipped model in `web/model`. GitHub Actions runs lint, all tests,
-checks that this README matches `results/`, and deploys `web/` to GitHub Pages.
+checks that this README, the case study and the post drafts match `results/`, and deploys `web/` to GitHub
+Pages.
 
 ## Layout
 
@@ -126,15 +137,16 @@ checks that this README matches `results/`, and deploys `web/` to GitHub Pages.
 python/glassbox/
   tokenizer.py   data.py   model.py   train.py   sample.py   export.py
   sae.py         features.py   steer.py   attribution.py   induction.py   guard.py   guard_layers.py
-  eval/          lm_eval, web_parity, sae_eval, sae_index, summary
+  eval/          lm_eval, web_parity, sae_eval, sae_index, summary, writeup
 web/
-  index.html  microscope.html  replay.html
+  index.html  microscope.html  replay.html  case-study.html (generated)  og.png  img/
   engine/        tokenizer, model (KV cache, hooks), SAE, sampling, generation, attribution, guard
   ui/            page logic and styles
   model/         exported weights, tokenizer, SAEs (sae, sae_k16, sae_k32), feature data, replay data, guard
   test/          JS unit tests;  tools/  Node bridge for the parity tests
 tests/           pytest suite
 results/         script-generated reports
+docs/            demo GIF and the scripts that record it, link preview script, post drafts (generated)
 ```
 
 ## Data and licenses

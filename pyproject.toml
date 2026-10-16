@@ -27,3 +27,6 @@ src = ["python", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B"]
 ignore = ["B905"]  # zip() over pairs such as zip(ids, ids[1:]) is intentionally uneven
+
+[tool.ruff.lint.per-file-ignores]
+"python/glassbox/eval/writeup.py" = ["E501"]  # page and post templates: one paragraph per line

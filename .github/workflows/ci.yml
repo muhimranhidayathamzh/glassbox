@@ -29,8 +29,10 @@ jobs:
         run: |
           ruff check python tests
           for f in $(git ls-files 'web/*.js' 'web/*.mjs'); do node --check "$f"; done
-      - name: README results match results/
-        run: python -m glassbox.eval.summary --check
+      - name: README results, case study and post drafts match results/
+        run: |
+          python -m glassbox.eval.summary --check
+          python -m glassbox.eval.writeup --check
       - name: Tests (Python, JS unit tests, JS-vs-PyTorch parity)
         run: pytest -q
 
