@@ -139,13 +139,17 @@ def test_shipped_model_parity():
     check_parity(SHIPPED, seqs, greedy_tokens=n_ctx + 50)
 
 
-@pytest.mark.skipif(not (SHIPPED_SAE / "manifest.json").exists(), reason="run python -m glassbox.export sae")
-def test_shipped_sae_parity():
+SHIPPED_SAES = sorted(d.name for d in SHIPPED.glob("sae*") if (d / "manifest.json").exists())
+
+
+@pytest.mark.skipif(not SHIPPED_SAES, reason="run python -m glassbox.export sae")
+@pytest.mark.parametrize("sae_dir", SHIPPED_SAES)
+def test_shipped_sae_parity(sae_dir):
     _, tok, manifest = load_exported(SHIPPED)
     story = [tok.eot_id] + tok.encode(
         "Lily found a red ball in the park. She said, \"Can I play with it?\" Her mom smiled. " * 8
     )
-    check_sae_parity(SHIPPED, SHIPPED_SAE, [story[: manifest["config"]["n_ctx"]]])
+    check_sae_parity(SHIPPED, SHIPPED / sae_dir, [story[: manifest["config"]["n_ctx"]]])
 
 
 def check_steering_and_attribution_parity(
@@ -239,9 +243,12 @@ def test_tiny_guard_parity(tiny_export, tmp_path):
     check_guard_parity(tiny_export, tiny_export / "sae", path, [rng.integers(0, 299, 30).tolist()])
 
 
-@pytest.mark.skipif(not (SHIPPED_SAE / "guard.json").exists(), reason="run python -m glassbox.guard")
+@pytest.mark.skipif(not (SHIPPED / "guard.json").exists(), reason="run python -m glassbox.guard")
 def test_shipped_guard_parity():
+    import json
+
     _, tok, _ = load_exported(SHIPPED)
+    sae_dir = SHIPPED / json.loads((SHIPPED / "guard.json").read_text(encoding="utf-8"))["sae_dir"]
     ids = [tok.eot_id] + tok.encode('Once upon a time, there was a girl named Lily. "Hi, Tom!" said Lily. '
                                     "Tom and Lily played in the park with Max.")
-    check_guard_parity(SHIPPED, SHIPPED_SAE, SHIPPED_SAE / "guard.json", [ids])
+    check_guard_parity(SHIPPED, sae_dir, SHIPPED / "guard.json", [ids])

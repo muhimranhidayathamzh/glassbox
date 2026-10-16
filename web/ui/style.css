@@ -803,3 +803,12 @@ input[type="range"]#ckpt {
   letter-spacing: -0.05em;
   cursor: help;
 }
+
+.inline-select {
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+}

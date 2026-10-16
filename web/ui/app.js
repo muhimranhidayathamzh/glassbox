@@ -1,6 +1,6 @@
 import { generateIds, generateTokens } from "../engine/generate.js";
 import { NameGuard, sentenceStart } from "../engine/guard.js";
-import { loadModel, loadSAE } from "../engine/load.js";
+import { loadGuard, loadModel, loadSAE } from "../engine/load.js";
 import { steeringHooks, steeringVector } from "../engine/sae.js";
 import { topTokens } from "../engine/sampling.js";
 
@@ -15,7 +15,8 @@ const EXAMPLES = [
 ];
 
 let engine = null;
-let saeLoad = null; // Promise of {sae, steering, guard, nameGuard}
+let saeLoad = null; // Promise of {sae, steering}: the default SAE, for steering
+let guardLoad = null; // Promise of {sae, nameGuard}: the SAE named by guard.json
 let running = false;
 let stopRequested = false;
 
@@ -43,12 +44,11 @@ function tokenTitle(tokenizer, id, prob, modelProbs) {
   return lines.join("\n");
 }
 
-/** Load the SAE, the steering presets and the name guard the first time one of them is needed. */
+/** Load the default SAE and the steering presets the first time they are needed. */
 function ensureSAE() {
   saeLoad ??= loadSAE(new URL("../model/sae/", import.meta.url), engine.manifest, null,
-                      { features: false, steering: true, guard: true })
+                      { features: false, steering: true })
     .then((s) => {
-      s.nameGuard = new NameGuard(s.guard);
       $("steer-layer").textContent = String(s.steering.layer);
       const select = $("steer-feature");
       for (const p of s.steering.presets) {
@@ -73,28 +73,37 @@ async function currentSteering() {
   };
 }
 
+/** Load the name guard and the SAE it reads the first time it is needed. */
+function ensureGuard() {
+  guardLoad ??= loadGuard(new URL("../model/", import.meta.url), engine.manifest, null)
+    .then(({ json, sae }) => ({ sae, nameGuard: new NameGuard(json) }));
+  return guardLoad;
+}
+
 /** Name-guard state for the current controls, or null when the guard is off. */
 async function currentGuard() {
   const mode = $("guard-mode").value;
   if (mode === "off") return null;
-  const { sae, nameGuard } = await ensureSAE();
+  const { sae, nameGuard } = await ensureGuard();
   return { sae, guard: nameGuard, mode, threshold: nameGuard.thresholds[mode], wordCheck: $("guard-word").checked,
            resid: null, pos: 0 };
 }
 
-/** One hook at the SAE layer that steers (if on) and then records the residual for the guard. */
+/** Hooks that steer (if on) and record the residual the guard reads (if on), steering first. */
 function combinedHooks(steer, guardState) {
   if (!steer && !guardState) return null;
-  const layer = guardState ? guardState.guard.layer : steer.layer;
-  return {
-    [layer]: (x, pos) => {
-      steer?.hooks[layer]?.(x, pos);
-      if (guardState) {
+  const layers = new Set([steer?.layer, guardState?.guard.layer].filter((l) => l !== undefined));
+  const hooks = {};
+  for (const layer of layers) {
+    hooks[layer] = (x, pos) => {
+      if (steer?.layer === layer) steer.hooks[layer](x, pos);
+      if (guardState?.guard.layer === layer) {
         guardState.resid = x.slice();
         guardState.pos = pos;
       }
-    },
-  };
+    };
+  }
+  return hooks;
 }
 
 function tokenSpan(text, ev, tokenizer) {
@@ -322,11 +331,12 @@ async function init() {
     $("generate").disabled = false;
     $("generate").textContent = "Generate";
     if (selftestMode) selftest();
-    for (const panel of ["steer-panel", "guard-panel"]) {
-      $(panel).addEventListener("toggle", () => {
-        if ($(panel).open) ensureSAE().catch((err) => setStatus(`SAE unavailable: ${err.message}`, true));
-      });
-    }
+    $("steer-panel").addEventListener("toggle", () => {
+      if ($("steer-panel").open) ensureSAE().catch((err) => setStatus(`Steering unavailable: ${err.message}`, true));
+    });
+    $("guard-panel").addEventListener("toggle", () => {
+      if ($("guard-panel").open) ensureGuard().catch((err) => setStatus(`Name guard unavailable: ${err.message}`, true));
+    });
     if (params.has("steer")) {
       $("steer-panel").open = true;
       await ensureSAE();

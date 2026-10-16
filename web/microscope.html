@@ -23,8 +23,10 @@
       <textarea id="text" rows="4" spellcheck="false"></textarea>
       <div class="actions">
         <button id="analyze" class="primary" disabled>Loading&hellip;</button>
+        <label class="toggle">Sparse autoencoder <select id="sae-select" class="inline-select"></select></label>
         <span id="analyze-note" class="hint"></span>
       </div>
+      <p id="sae-note" class="hint"></p>
       <progress id="progress" max="1" value="0"></progress>
       <p id="status" role="status"></p>
       <div id="tokens" class="story token-strip" aria-label="Tokens of your text"></div>

@@ -1,7 +1,7 @@
 """Name guard: stop the model from showing a name, by reading its internal state before the token
 is chosen, compared with a regex + name list and with logistic-regression classifiers.
 
-    python -m glassbox.guard        # -> results/guard.{json,md}, web/model/sae/guard.json
+    python -m glassbox.guard        # -> results/guard.{json,md}, web/model/guard.json
 
 Labelled data. Validation stories (never seen in training), where names are found with a lexicon
 built automatically from the training stories: words that are capitalized in the middle of a
@@ -490,14 +490,15 @@ def main() -> None:
     top = [{"id": int(i), "weight": float(w[i]), "label": labels.get(int(i), "?")} for i in np.argsort(-w)[:40]]
     sae_th = thresholds["SAE-feature classifier"]
     guard_ui = {
-        "format": "glassbox-guard", "version": 1, "layer": sae.cfg.layer,
+        "format": "glassbox-guard", "version": 1, "layer": sae.cfg.layer, "sae_dir": a.sae_dir.name,
         "sae_weights_sha256": sae_manifest["weights_sha256"], "bias": float(sae_lr.b), "threshold": sae_th,
         "strict_threshold": strict_th, "strict_recall": STRICT_RECALL,
         "names": sorted(names), "exclude": sorted(EXCLUDE),
         "labels": {str(int(i)): labels.get(int(i), "?") for i in np.nonzero(w > 0.05)[0]},
         "weights": [round(float(v), 5) for v in w], "top_features": top,
     }
-    (a.sae_dir / "guard.json").write_text(json.dumps(guard_ui, separators=(",", ":")), encoding="utf-8")
+    guard_file = a.model_dir / "guard.json"  # the page's guard; guard_layers.py may later replace it
+    guard_file.write_text(json.dumps(guard_ui, separators=(",", ":")), encoding="utf-8")
 
     used_new = sorted(used_new)
     report = {
@@ -516,14 +517,14 @@ def main() -> None:
 
     if node_available():  # added latency of the guard in the browser engine
         bench = run_node({"model_dir": a.model_dir, "sae_dir": a.sae_dir,
-                          "guard_bench": {"file": str((a.sae_dir / "guard.json").resolve()), "tokens": 200,
+                          "guard_bench": {"file": str(guard_file.resolve()), "tokens": 200,
                                           "repeats": 5}})[0]["guard_bench"]
         report["latency"] = {"runtime": bench["runtime"], "tokens": bench["tokens"], "base_ms": bench["base_ms"],
                              "added_ms": {"SAE guard + word check": bench["guarded_ms"] - bench["base_ms"]}}
     a.results_dir.mkdir(parents=True, exist_ok=True)
     (a.results_dir / "guard.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     write_markdown(report, a.results_dir / "guard.md")
-    print(f"wrote {a.results_dir / 'guard.md'} and {a.sae_dir / 'guard.json'} in {report['seconds']} s")
+    print(f"wrote {a.results_dir / 'guard.md'} and {guard_file} in {report['seconds']} s")
 
 
 if __name__ == "__main__":

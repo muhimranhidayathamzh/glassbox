@@ -16,6 +16,9 @@ let features = null; // features.json
 let analysis = { ids: [], codes: [] };
 let selectedPos = null;
 let selectedFeature = null;
+let modelManifest = null;
+let saeIndex = null; // saes.json (python -m glassbox.eval.sae_index)
+const saeCache = new Map(); // dir -> Promise of {sae, features}
 
 function setStatus(text, isError = false) {
   $("status").textContent = text;
@@ -314,6 +317,37 @@ function selectFeature(f) {
   $("feature").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
+function progress(got, total) {
+  $("progress").hidden = false;
+  $("progress").value = got / total;
+  setStatus(`Downloading… ${(got / 1e6).toFixed(1)} / ${(total / 1e6).toFixed(1)} MB`);
+}
+
+/** Switch to the SAE exported in web/model/<dir>/ (each is downloaded once, then cached). */
+async function useSAE(dir) {
+  if (!saeCache.has(dir)) {
+    const loading = loadSAE(new URL(`../model/${dir}/`, import.meta.url), modelManifest, progress);
+    saeCache.set(dir, loading);
+    loading.catch(() => saeCache.delete(dir));
+  }
+  ({ sae, features } = await saeCache.get(dir));
+  $("progress").hidden = true;
+  selectedFeature = null;
+  selectedPos = null;
+  $("n-features").textContent = sae.cfg.n_features.toLocaleString("en");
+  $("sae-layer").textContent = String(sae.cfg.layer);
+  const dead = features.features.filter((f) => f.dead).length;
+  const info = saeIndex?.saes.find((e) => e.dir === dir);
+  $("sae-note").textContent = info
+    ? `k = ${info.k} features active per token. Variance explained ${info.variance_explained.toFixed(3)}; the ` +
+      `model's loss rises ${(info.relative_loss_increase * 100).toFixed(1)}% when this SAE replaces its ` +
+      `internal state; ${dead} of ${sae.cfg.n_features} features never fired on the validation text. ` +
+      "Smaller k: fewer features " +
+      "to look at per token; larger k: a more faithful copy of the model's state."
+    : "";
+  setStatus(`Ready: SAE with ${sae.cfg.n_features} features (k = ${sae.cfg.k}, ${dead} dead) on layer ${sae.cfg.layer}.`);
+}
+
 function analyze() {
   const all = [tokenizer.eotId, ...tokenizer.encode($("text").value, { allowSpecial: false })];
   const ids = all.slice(0, model.cfg.n_ctx);
@@ -345,22 +379,39 @@ async function init() {
     renderCircuit();
   });
   try {
-    const progress = (got, total) => {
-      $("progress").value = got / total;
-      setStatus(`Downloading\u2026 ${(got / 1e6).toFixed(1)} / ${(total / 1e6).toFixed(1)} MB`);
-    };
     const m = await loadModel(new URL("../model/", import.meta.url), progress);
     ({ model, tokenizer } = m);
-    const s = await loadSAE(new URL("../model/sae/", import.meta.url), m.manifest, progress);
-    ({ sae, features } = s);
+    modelManifest = m.manifest;
+    const params = new URLSearchParams(location.search);
+    saeIndex = await fetch(new URL("../model/saes.json", import.meta.url))
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null);
+    const entries = saeIndex?.saes ?? [{ dir: "sae", default: true }];
+    const select = $("sae-select");
+    for (const e of entries) {
+      select.append(new Option(e.k ? `k = ${e.k}${e.default ? " (default)" : ""}` : "default", e.dir));
+    }
+    const wanted = entries.find((e) => e.dir === params.get("sae")) ?? entries.find((e) => e.default);
+    select.value = wanted.dir;
+    select.addEventListener("change", async () => {
+      select.disabled = true;
+      try {
+        await useSAE(select.value);
+        analyze();
+        renderSearch();
+        const url = new URL(location.href);
+        url.searchParams.set("sae", select.value);
+        history.replaceState(null, "", url);
+      } catch (err) {
+        setStatus(`Could not load that SAE: ${err.message}`, true);
+      } finally {
+        select.disabled = false;
+      }
+    });
+    await useSAE(wanted.dir);
     $("progress").hidden = true;
-    $("n-features").textContent = sae.cfg.n_features.toLocaleString("en");
-    $("sae-layer").textContent = String(sae.cfg.layer);
-    const dead = features.features.filter((f) => f.dead).length;
-    setStatus(`Ready: SAE with ${sae.cfg.n_features} features (k = ${sae.cfg.k}, ${dead} dead) on layer ${sae.cfg.layer}.`);
     $("analyze").disabled = false;
     $("analyze").textContent = "Analyze";
-    const params = new URLSearchParams(location.search);
     if (params.has("text")) $("text").value = params.get("text");
     analyze();
     if (params.has("feature")) selectFeature(Number(params.get("feature")));

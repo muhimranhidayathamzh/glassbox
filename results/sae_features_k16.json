@@ -1,0 +1,207 @@
+{
+  "sae": {
+    "d_in": 192,
+    "n_features": 2048,
+    "k": 16,
+    "layer": 2,
+    "scale": 0.7021811869515026
+  },
+  "eval_tokens": 2088960,
+  "eval_windows": 8192,
+  "n_features": 2048,
+  "dead": 28,
+  "density_buckets": {
+    "<1e-4": 128,
+    "1e-4..1e-3": 504,
+    "1e-3..1e-2": 1072,
+    "1e-2..1e-1": 286,
+    ">=0.1": 30
+  },
+  "token_specificity": {
+    "SAE (trained)": {
+      "directions_scored": 1923,
+      "directions_skipped": 97,
+      "mean_top_token_share": 0.8338799184765964,
+      "share_ge_0.5": 0.8699947997919917,
+      "share_ge_0.8": 0.7072282891315652
+    },
+    "residual dimensions (+/-)": {
+      "directions_scored": 383,
+      "directions_skipped": 1,
+      "mean_top_token_share": 0.4672323759791123,
+      "share_ge_0.5": 0.42036553524804177,
+      "share_ge_0.8": 0.1174934725848564
+    },
+    "random directions": {
+      "directions_scored": 381,
+      "directions_skipped": 3,
+      "mean_top_token_share": 0.4579677540307462,
+      "share_ge_0.5": 0.3884514435695538,
+      "share_ge_0.8": 0.12073490813648294
+    },
+    "untrained SAE (same k)": {
+      "directions_scored": 2025,
+      "directions_skipped": 23,
+      "mean_top_token_share": 0.4558582490526075,
+      "share_ge_0.5": 0.3797530864197531,
+      "share_ge_0.8": 0.10666666666666667
+    }
+  },
+  "example_positions": [
+    {
+      "positions": "1-1",
+      "share_of_examples": 0.0023803363518758087,
+      "share_if_uniform": 0.00392156862745098,
+      "mean_residual_norm": 33.84257507324219
+    },
+    {
+      "positions": "2-3",
+      "share_of_examples": 0.007710219922380336,
+      "share_if_uniform": 0.00784313725490196,
+      "mean_residual_norm": 29.161949157714844
+    },
+    {
+      "positions": "4-7",
+      "share_of_examples": 0.029909443725743855,
+      "share_if_uniform": 0.01568627450980392,
+      "mean_residual_norm": 25.992082595825195
+    },
+    {
+      "positions": "8-15",
+      "share_of_examples": 0.08721862871927555,
+      "share_if_uniform": 0.03137254901960784,
+      "mean_residual_norm": 23.48143768310547
+    },
+    {
+      "positions": "16-63",
+      "share_of_examples": 0.29089262613195344,
+      "share_if_uniform": 0.18823529411764706,
+      "mean_residual_norm": 20.17738151550293
+    },
+    {
+      "positions": "64-255",
+      "share_of_examples": 0.581888745148771,
+      "share_if_uniform": 0.7529411764705882,
+      "mean_residual_norm": 18.892465591430664
+    }
+  ],
+  "labels": {
+    "features_with_enough_examples": 1923,
+    "too_rare": 97,
+    "kind": {
+      "token": 1642,
+      "after": 207,
+      "before": 74
+    },
+    "share_ge_0.8": 1478,
+    "share_0.5_to_0.8": 298,
+    "share_lt_0.5": 147
+  },
+  "random_sample": [
+    {
+      "id": 33,
+      "label": "\" run\"",
+      "label_share": 1.0,
+      "density": 0.0016017539828431372,
+      "n_examples": 20,
+      "top_example": " Pip went for a run. Pip was very fast. He liked to[[ run]] in the cold snow"
+    },
+    {
+      "id": 83,
+      "label": "after \" be\"",
+      "label_share": 1.0,
+      "density": 0.006603764552696079,
+      "n_examples": 20,
+      "top_example": " wanted to go. She said, \"Okay, but we must promise to be[[ back]] soon.\" Tim said"
+    },
+    {
+      "id": 155,
+      "label": "\" anymore\"",
+      "label_share": 1.0,
+      "density": 4.787071078431372e-07,
+      "n_examples": 1,
+      "top_example": "After a while, they found the middle of the maze. Tim was not nervous[[ anymore]]. He was happy"
+    },
+    {
+      "id": 358,
+      "label": "\"vel\"",
+      "label_share": 1.0,
+      "density": 0.00024605545343137254,
+      "n_examples": 20,
+      "top_example": " in the garden. She brings a big bucket of water and a small sho[[vel]]. She digs"
+    },
+    {
+      "id": 550,
+      "label": "\" jealous\"",
+      "label_share": 0.4,
+      "density": 0.008030311734068627,
+      "n_examples": 20,
+      "top_example": ", there was a star named Twinkle. Twinkle was a very[[ jealous]] star. He wanted"
+    },
+    {
+      "id": 627,
+      "label": "\"ie\"",
+      "label_share": 1.0,
+      "density": 0.0007175819546568628,
+      "n_examples": 20,
+      "top_example": "<\\|endoftext\\|>Once upon a time there was a nice boy named Edd[[ie]]. He was very"
+    },
+    {
+      "id": 1041,
+      "label": "\"m\"",
+      "label_share": 1.0,
+      "density": 0.00042078354779411767,
+      "n_examples": 20,
+      "top_example": " but it was also very happy. The jellyfish liked to play a game called \"[[m]]atch\". In this"
+    },
+    {
+      "id": 1301,
+      "label": "after \"'s\"",
+      "label_share": 0.95,
+      "density": 0.004912492340686274,
+      "n_examples": 20,
+      "top_example": "'s family. They walked and walked, and finally, they saw Tweetie's[[ family]] on a tree."
+    },
+    {
+      "id": 1332,
+      "label": "\" more\"",
+      "label_share": 1.0,
+      "density": 0.002354281556372549,
+      "n_examples": 20,
+      "top_example": " \"Lily, this one is too much. We need to find one we value[[ more]].\" They looked around"
+    },
+    {
+      "id": 1665,
+      "label": "\" brush\"",
+      "label_share": 0.3,
+      "density": 0.009057138480392158,
+      "n_examples": 20,
+      "top_example": "<\\|endoftext\\|>One day, a little girl named Lily wanted to order a new[[ brush]]. Her old brush"
+    },
+    {
+      "id": 1733,
+      "label": "after \" and\"",
+      "label_share": 1.0,
+      "density": 0.011371687346813725,
+      "n_examples": 20,
+      "top_example": " than theirs and he can beat them in a fight. Tom and[[ Mia]] get angry. They"
+    },
+    {
+      "id": 1868,
+      "label": "\" pointed\"",
+      "label_share": 1.0,
+      "density": 0.00047774969362745096,
+      "n_examples": 20,
+      "top_example": "ef. Tim liked to point at things with his long nose. He[[ pointed]] at all the pretty"
+    }
+  ],
+  "settings": {
+    "examples_for_stats": 20,
+    "examples_for_ui": 8,
+    "distinct_context_tokens": 4,
+    "candidates": 1000,
+    "min_examples_for_metric": 10,
+    "seed": 0
+  },
+  "seconds": 787.5
+}

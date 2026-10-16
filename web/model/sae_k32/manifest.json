@@ -1,0 +1,56 @@
+{
+ "format": "glassbox-sae",
+ "version": 1,
+ "config": {
+  "d_in": 192,
+  "n_features": 2048,
+  "k": 32,
+  "layer": 2,
+  "scale": 0.7021811869515026
+ },
+ "dtype": "float16",
+ "weights_file": "weights.bin",
+ "weights_bytes": 1577344,
+ "weights_sha256": "12120203f22a049e74f3822c36c95aad00ee92059fd2780a8203bfba86e318a4",
+ "tensors": [
+  {
+   "name": "W_enc",
+   "shape": [
+    192,
+    2048
+   ],
+   "offset": 0,
+   "length": 393216
+  },
+  {
+   "name": "b_enc",
+   "shape": [
+    2048
+   ],
+   "offset": 393216,
+   "length": 2048
+  },
+  {
+   "name": "W_dec",
+   "shape": [
+    2048,
+    192
+   ],
+   "offset": 395264,
+   "length": 393216
+  },
+  {
+   "name": "b_dec",
+   "shape": [
+    192
+   ],
+   "offset": 788480,
+   "length": 192
+  }
+ ],
+ "model_weights_sha256": "e314a94c30dbfa52bb462f5015a9e20388b415cdb4279667e6f6db0ade7932b6",
+ "source": {
+  "sae": "runs/sae_k32/sae.pt",
+  "source_checkpoint": "runs/main/final.pt"
+ }
+}

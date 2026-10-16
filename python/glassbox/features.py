@@ -17,7 +17,7 @@ direction, or a feature of an untrained SAE), the share of its top examples that
 single most common token. It measures one narrow kind of interpretability: features that
 track a context rather than a token score low even when they are meaningful.
 
-Writes web/model/sae/features.json (for the UI) and results/sae_features.{json,md}.
+Writes <sae-dir>/features.json (for the UI) and results/<results-name>.{json,md}.
 """
 
 from __future__ import annotations
@@ -186,10 +186,11 @@ def main() -> None:
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--threads", type=int, default=4)
     p.add_argument("--markdown-only", action="store_true", help="rewrite the .md from the existing .json")
+    p.add_argument("--results-name", default="sae_features", help="base name of the report files")
     a = p.parse_args()
     if a.markdown_only:
-        report = json.loads((a.results_dir / "sae_features.json").read_text(encoding="utf-8"))
-        write_markdown(report, a.results_dir / "sae_features.md")
+        report = json.loads((a.results_dir / f"{a.results_name}.json").read_text(encoding="utf-8"))
+        write_markdown(report, a.results_dir / f"{a.results_name}.md")
         return
     torch.set_num_threads(a.threads)
     t0 = time.time()
@@ -311,10 +312,10 @@ def main() -> None:
                 f[key] = [[t, round(s, 3)] for t, s in f[key]]
     (a.sae_dir / "features.json").write_text(json.dumps(ui, separators=(",", ":")), encoding="utf-8")
     a.results_dir.mkdir(parents=True, exist_ok=True)
-    (a.results_dir / "sae_features.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-    write_markdown(report, a.results_dir / "sae_features.md")
+    (a.results_dir / f"{a.results_name}.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    write_markdown(report, a.results_dir / f"{a.results_name}.md")
     print(f"{len(alive_feats)} alive / {sae.cfg.n_features} features; wrote {a.sae_dir / 'features.json'} "
-          f"and {a.results_dir / 'sae_features.md'} in {report['seconds']} s")
+          f"and {a.results_dir / (a.results_name + '.md')} in {report['seconds']} s")
 
 
 def position_summary(buckets: list[dict]) -> str:

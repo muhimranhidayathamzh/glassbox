@@ -23,6 +23,35 @@ def pct(x: float, digits: int = 0) -> str:
     return f"{x * 100:.{digits}f}%"
 
 
+def sae_comparison(results: Path) -> str:
+    """One sentence comparing the shipped SAEs, if the feature reports of the larger ones exist."""
+    reports = [load(results, name) for name in ("sae_features", "sae_features_k16", "sae_features_k32")
+               if (results / f"{name}.json").exists()]
+    if len(reports) < 2:
+        return ""
+    reports.sort(key=lambda r: r["sae"]["k"])
+    spec = [r["token_specificity"]["SAE (trained)"]["share_ge_0.5"] for r in reports]
+    ks = ", ".join(str(r["sae"]["k"]) for r in reports)
+    return (f" Across the shipped SAEs (k = {ks}), token specificity barely changes ({pct(min(spec), 1)} to "
+            f"{pct(max(spec), 1)}) while the features that never fire on {reports[0]['eval_tokens'] / 1e6:.1f}M "
+            f"validation tokens fall from {reports[0]['dead']} to {reports[-1]['dead']}; the microscope lets you "
+            "switch between them.")
+
+
+def guard_layers_note(results: Path) -> str:
+    """Which SAE the page's guard uses, chosen on a separate selection split (if that study was run)."""
+    if not (results / "guard_layers.json").exists():
+        return ""
+    r = load(results, "guard_layers")
+    rows = {c["name"]: c for c in r["candidates"]}
+    chosen = rows[r["selected"]]
+    first = next(c for c in r["candidates"] if c.get("dir") == "sae")
+    if chosen is first:
+        return " A follow-up comparing SAEs and layers kept this guard."
+    return (f" A follow-up, choosing on a separate selection split, moved the page's guard to the k = {chosen['k']} "
+            f"SAE (test F1 on new names {chosen['new']['f1']:.2f} vs {first['new']['f1']:.2f}).")
+
+
 def build(results: Path) -> str:
     lm, web, sae, feats = (load(results, n) for n in ("lm_eval", "web_parity", "sae_eval", "sae_features"))
     steer, attr, ind, guard = (load(results, n) for n in ("steering", "attribution", "induction", "guard"))
@@ -74,7 +103,8 @@ def build(results: Path) -> str:
         f"{pct(regex['new']['recall'])}); SAE-feature guard alone F1 {sae_g['new']['f1']:.2f}; **regex or SAE guard "
         f"catches {pct(both['new']['recall'])} of names** ({pct(strict['new']['recall'])} in strict mode), at "
         f"{both['new']['false_blocks_per_1000_tokens']:.0f} false blocks per 1,000 tokens; +"
-        f"{guard['latency']['added_ms']['SAE guard + word check']:.2f} ms per token. | [guard](results/guard.md) |",
+        f"{guard['latency']['added_ms']['SAE guard + word check']:.2f} ms per token.{guard_layers_note(results)} "
+        "| [guard](results/guard.md), [guard_layers](results/guard_layers.md) |",
         "",
         "### Negative and mixed results, reported as they came out",
         "",
@@ -87,7 +117,7 @@ def build(results: Path) -> str:
         f"- **The SAE used by the UI raises the model's loss by {pct(sel['relative_loss_increase'], 1)}** when "
         "spliced in, and "
         f"{pct(sel['dead'] / sae['n_features'])} of its features are dead. It was chosen by a rule fixed in "
-        "advance that turned out to be lenient.",
+        "advance that turned out to be lenient." + sae_comparison(results),
         f"- **Direct logit attribution**, the method named in the project brief, correlates weakly with the "
         f"true effect of removing a feature (Spearman {est['direct logit attribution']['spearman']:.2f}).",
         END,

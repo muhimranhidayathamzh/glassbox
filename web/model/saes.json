@@ -1,0 +1,39 @@
+{
+ "format": "glassbox-sae-index",
+ "version": 1,
+ "saes": [
+  {
+   "dir": "sae",
+   "k": 8,
+   "n_features": 2048,
+   "layer": 2,
+   "default": true,
+   "weights_sha256": "4620ce59b4d29f2ac1c45169f4d1776cddadc0c63e8f292d2e54d4fa0f70a539",
+   "variance_explained": 0.8881610275156049,
+   "relative_loss_increase": 0.12692556908919075,
+   "dead_share": 0.13916015625
+  },
+  {
+   "dir": "sae_k16",
+   "k": 16,
+   "n_features": 2048,
+   "layer": 2,
+   "default": false,
+   "weights_sha256": "e0b116c3e4918e2a6e3253d1376e509d05ead3665b3551294f073a9764c6e040",
+   "variance_explained": 0.9232150445776371,
+   "relative_loss_increase": 0.0648039811347658,
+   "dead_share": 0.01953125
+  },
+  {
+   "dir": "sae_k32",
+   "k": 32,
+   "n_features": 2048,
+   "layer": 2,
+   "default": false,
+   "weights_sha256": "12120203f22a049e74f3822c36c95aad00ee92059fd2780a8203bfba86e318a4",
+   "variance_explained": 0.9479778505491101,
+   "relative_loss_increase": 0.03680313868245611,
+   "dead_share": 0.00048828125
+  }
+ ]
+}

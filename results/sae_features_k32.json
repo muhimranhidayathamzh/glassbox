@@ -1,0 +1,207 @@
+{
+  "sae": {
+    "d_in": 192,
+    "n_features": 2048,
+    "k": 32,
+    "layer": 2,
+    "scale": 0.7021811869515026
+  },
+  "eval_tokens": 2088960,
+  "eval_windows": 8192,
+  "n_features": 2048,
+  "dead": 1,
+  "density_buckets": {
+    "<1e-4": 12,
+    "1e-4..1e-3": 263,
+    "1e-3..1e-2": 1194,
+    "1e-2..1e-1": 524,
+    ">=0.1": 54
+  },
+  "token_specificity": {
+    "SAE (trained)": {
+      "directions_scored": 2010,
+      "directions_skipped": 37,
+      "mean_top_token_share": 0.8305464412082637,
+      "share_ge_0.5": 0.8686567164179104,
+      "share_ge_0.8": 0.6975124378109453
+    },
+    "residual dimensions (+/-)": {
+      "directions_scored": 383,
+      "directions_skipped": 1,
+      "mean_top_token_share": 0.4672323759791123,
+      "share_ge_0.5": 0.42036553524804177,
+      "share_ge_0.8": 0.1174934725848564
+    },
+    "random directions": {
+      "directions_scored": 381,
+      "directions_skipped": 3,
+      "mean_top_token_share": 0.4579677540307462,
+      "share_ge_0.5": 0.3884514435695538,
+      "share_ge_0.8": 0.12073490813648294
+    },
+    "untrained SAE (same k)": {
+      "directions_scored": 2019,
+      "directions_skipped": 29,
+      "mean_top_token_share": 0.4552140766552002,
+      "share_ge_0.5": 0.3848439821693908,
+      "share_ge_0.8": 0.10401188707280833
+    }
+  },
+  "example_positions": [
+    {
+      "positions": "1-1",
+      "share_of_examples": 0.0020615996025832094,
+      "share_if_uniform": 0.00392156862745098,
+      "mean_residual_norm": 33.84257507324219
+    },
+    {
+      "positions": "2-3",
+      "share_of_examples": 0.006830601092896175,
+      "share_if_uniform": 0.00784313725490196,
+      "mean_residual_norm": 29.161949157714844
+    },
+    {
+      "positions": "4-7",
+      "share_of_examples": 0.03094883258817685,
+      "share_if_uniform": 0.01568627450980392,
+      "mean_residual_norm": 25.992082595825195
+    },
+    {
+      "positions": "8-15",
+      "share_of_examples": 0.08527074018877298,
+      "share_if_uniform": 0.03137254901960784,
+      "mean_residual_norm": 23.48143768310547
+    },
+    {
+      "positions": "16-63",
+      "share_of_examples": 0.28802781917536013,
+      "share_if_uniform": 0.18823529411764706,
+      "mean_residual_norm": 20.17738151550293
+    },
+    {
+      "positions": "64-255",
+      "share_of_examples": 0.5868604073522107,
+      "share_if_uniform": 0.7529411764705882,
+      "mean_residual_norm": 18.892465591430664
+    }
+  ],
+  "labels": {
+    "features_with_enough_examples": 2010,
+    "too_rare": 37,
+    "kind": {
+      "token": 1721,
+      "before": 69,
+      "after": 220
+    },
+    "share_ge_0.8": 1513,
+    "share_0.5_to_0.8": 341,
+    "share_lt_0.5": 156
+  },
+  "random_sample": [
+    {
+      "id": 33,
+      "label": "\" walk\"",
+      "label_share": 1.0,
+      "density": 0.0009511910232843137,
+      "n_examples": 20,
+      "top_example": "<\\|endoftext\\|>One day, a big doctor went for a[[ walk]]. He took big"
+    },
+    {
+      "id": 83,
+      "label": "after \" be\"",
+      "label_share": 1.0,
+      "density": 0.007212201286764706,
+      "n_examples": 20,
+      "top_example": " wanted to go. She said, \"Okay, but we must promise to be[[ back]] soon.\" Tim said"
+    },
+    {
+      "id": 153,
+      "label": "\" faster\"",
+      "label_share": 0.95,
+      "density": 0.006614296109068628,
+      "n_examples": 20,
+      "top_example": " a hairy dog named Max. Max was very good at running. He could run[[ faster]] than all the other"
+    },
+    {
+      "id": 358,
+      "label": "\" scared\"",
+      "label_share": 0.95,
+      "density": 0.008639705882352942,
+      "n_examples": 20,
+      "top_example": "One day, a little cat came up to the fence. The cat was not[[ scared]] of the dog."
+    },
+    {
+      "id": 550,
+      "label": "\" not\"",
+      "label_share": 1.0,
+      "density": 0.0064218558517156864,
+      "n_examples": 20,
+      "top_example": " a time, in a small garden, there was a cauliflower. This cauliflower was[[ not]] happy. It was"
+    },
+    {
+      "id": 627,
+      "label": "\" that\"",
+      "label_share": 1.0,
+      "density": 0.0017745672487745098,
+      "n_examples": 20,
+      "top_example": " the day, Lily's mom told her how proud she was. Lily was happy[[ that]] she could make her"
+    },
+    {
+      "id": 1041,
+      "label": "after \" clapped\"",
+      "label_share": 0.95,
+      "density": 0.004812921262254902,
+      "n_examples": 20,
+      "top_example": " where it was. Then he said \"Please kite\" very loudly and clapped[[ his]] hands. Suddenly the"
+    },
+    {
+      "id": 1298,
+      "label": "\" to\"",
+      "label_share": 1.0,
+      "density": 0.013657035079656862,
+      "n_examples": 20,
+      "top_example": "<\\|endoftext\\|>Steve wanted[[ to]] surprise his friend M"
+    },
+    {
+      "id": 1329,
+      "label": "\"Mom\"",
+      "label_share": 1.0,
+      "density": 0.004848824295343137,
+      "n_examples": 20,
+      "top_example": "<\\|endoftext\\|>[[Mom]] and Dad were very"
+    },
+    {
+      "id": 1664,
+      "label": "\" old\"",
+      "label_share": 0.75,
+      "density": 0.003619983149509804,
+      "n_examples": 20,
+      "top_example": " they got in their car and drove away. On their way, they saw a[[ police]] car. Jack was"
+    },
+    {
+      "id": 1732,
+      "label": "\" plan\"",
+      "label_share": 0.8,
+      "density": 0.00213168275122549,
+      "n_examples": 20,
+      "top_example": " unite and work together to stop the big threat. They made a[[ plan]] to make the monster"
+    },
+    {
+      "id": 1869,
+      "label": "\" fun\"",
+      "label_share": 1.0,
+      "density": 0.0040867225796568625,
+      "n_examples": 20,
+      "top_example": " day in the peaceful park, and they were very happy. They had lots of[[ fun]] using their stuff and"
+    }
+  ],
+  "settings": {
+    "examples_for_stats": 20,
+    "examples_for_ui": 8,
+    "distinct_context_tokens": 4,
+    "candidates": 1000,
+    "min_examples_for_metric": 10,
+    "seed": 0
+  },
+  "seconds": 672.3
+}

@@ -51,19 +51,28 @@ export async function loadModel(baseUrl, onProgress) {
   return { model: GPT.fromBuffers(manifest, buffer), tokenizer: new Tokenizer(tokJson), manifest };
 }
 
+/** The page's name guard (guard.json) and the SAE it reads, which guard.json names. */
+export async function loadGuard(modelUrl, modelManifest, onProgress) {
+  const base = new URL(modelUrl, location.href);
+  const json = await (await fetchOk(new URL("guard.json", base))).json();
+  const { sae, manifest } = await loadSAE(new URL(`${json.sae_dir}/`, base), modelManifest, onProgress,
+                                          { features: false });
+  if (json.sae_weights_sha256 !== manifest.weights_sha256) throw new Error("guard.json was made for another SAE");
+  return { json, sae };
+}
+
 /**
  * Load an exported SAE plus the requested companion files (features.json from features.py,
- * steering.json from steer.py, guard.json from guard.py). Refuses files made for a different
- * model or SAE.
+ * steering.json from steer.py). Refuses files made for a different model or SAE.
  */
 export async function loadSAE(baseUrl, modelManifest, onProgress,
-                              { features = true, steering = false, guard = false } = {}) {
+                              { features = true, steering = false } = {}) {
   const { base, manifest, buffer } = await loadExport(baseUrl, onProgress);
   if (manifest.model_weights_sha256 !== modelManifest.weights_sha256) {
     throw new Error("this SAE was exported for a different model");
   }
   const out = { sae: SAE.fromBuffers(manifest, buffer), manifest };
-  for (const [name, wanted] of [["features", features], ["steering", steering], ["guard", guard]]) {
+  for (const [name, wanted] of [["features", features], ["steering", steering]]) {
     if (!wanted) continue;
     const json = await (await fetchOk(new URL(`${name}.json`, base))).json();
     if (json.sae_weights_sha256 !== manifest.weights_sha256) {

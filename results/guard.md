@@ -47,11 +47,11 @@ The regex uses the same lexicon that defines the labels, and stories with other 
 
 ## Added latency per generated token (JavaScript engine, Node.js)
 
-node v24.15.0; a model step without any guard takes 4.63 ms (median of 200 tokens).
+node v24.15.0; a model step without any guard takes 5.08 ms (median of 200 tokens).
 
 | guard | added time per token | relative |
 |---|---:|---:|
-| SAE guard + word check | 0.741 ms | +16.0% |
+| SAE guard + word check | 0.649 ms | +12.8% |
 
 ## What the SAE guard looks at
 

@@ -10,9 +10,9 @@ does contain material derived from it:
 
 | file | what it contains |
 |---|---|
-| `web/model/sae/features.json` | short excerpts (up to 21 tokens each) of TinyStories validation stories, used as feature examples |
-| `results/sae_features.md`, `results/sae_features.json` | twelve of those excerpts |
-| `web/model/sae/guard.json` | a list of character names found in the TinyStories training stories |
+| `web/model/sae/features.json`, `web/model/sae_k16/features.json`, `web/model/sae_k32/features.json` | short excerpts (up to 21 tokens each) of TinyStories validation stories, used as feature examples |
+| `results/sae_features*.md`, `results/sae_features*.json` | twelve of those excerpts per SAE |
+| `web/model/guard.json` | a list of character names found in the TinyStories training stories |
 
 These excerpts and the name list are made available under CDLA-Sharing-1.0, with the attribution above.
 Model weights, scores and other numbers in `results/` are results of computational use of the data.

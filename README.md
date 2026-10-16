@@ -23,7 +23,8 @@ The browser pages:
 - **Generate**: write a story; *Steering* pushes it toward a concept with an SAE feature; *Name guard*
   hides names and shows why each word was hidden.
 - **Microscope**: type text, click a token to see the active features and a circuit graph of the
-  features that led the model to write it (computed by ablation in the browser).
+  features that led the model to write it (computed by ablation in the browser). Switch between
+  sparse autoencoders with k = 8, 16 or 32 active features per token.
 - **Replay**: slide through the checkpoints saved during training: loss curves, per-head induction and
   previous-token scores, attention patterns, and what the model wrote at that point.
 
@@ -42,13 +43,13 @@ Every number below and in `results/` is written by a script and can be regenerat
 | Steering | Feature directions at strength 0.5 make 83% of stories mention the concept, vs 9% for random directions of the same size (9% without steering), at a cost in fluency. | [steering](results/steering.md) |
 | Attribution | Against ablation, gradient x activation ranks features best (Spearman 0.73); direct logit attribution 0.17, because 58% of the effect flows through attention from earlier positions. | [attribution](results/attribution.md) |
 | Training replay | 23 checkpoints. **No induction head formed**: best prefix-matching score 0.031 (threshold 0.5), while a control model reaches 0.90. | [induction](results/induction.md) |
-| Name guard | On names never seen in fitting: regex + name list F1 0.69 (recall 52%); SAE-feature guard alone F1 0.46; **regex or SAE guard catches 71% of names** (94% in strict mode), at 21 false blocks per 1,000 tokens; +0.74 ms per token. | [guard](results/guard.md) |
+| Name guard | On names never seen in fitting: regex + name list F1 0.69 (recall 52%); SAE-feature guard alone F1 0.46; **regex or SAE guard catches 71% of names** (94% in strict mode), at 21 false blocks per 1,000 tokens; +0.65 ms per token. A follow-up, choosing on a separate selection split, moved the page's guard to the k = 32 SAE (test F1 on new names 0.47 vs 0.45). | [guard](results/guard.md), [guard_layers](results/guard_layers.md) |
 
 ### Negative and mixed results, reported as they came out
 
 - **No induction heads** in this 2.6M-parameter model after 28.7M tokens, on random, frequent and natural repeated text alike. The probe works (positive control), so this is a property of the model and its training budget.
 - **The SAE guard does not beat a regex** on its own (F1 0.46 vs 0.69): predicting a name before it is written is inherently uncertain. Its value is complementary: it catches names at the start of sentences that a regex cannot see.
-- **The SAE used by the UI raises the model's loss by 12.7%** when spliced in, and 14% of its features are dead. It was chosen by a rule fixed in advance that turned out to be lenient.
+- **The SAE used by the UI raises the model's loss by 12.7%** when spliced in, and 14% of its features are dead. It was chosen by a rule fixed in advance that turned out to be lenient. Across the shipped SAEs (k = 8, 16, 32), token specificity barely changes (86.9% to 87.0%) while the features that never fire on 2.1M validation tokens fall from 231 to 1; the microscope lets you switch between them.
 - **Direct logit attribution**, the method named in the project brief, correlates weakly with the true effect of removing a feature (Spearman 0.17).
 <!-- results:end -->
 
@@ -95,6 +96,11 @@ python -m glassbox.steer && python -m glassbox.attribution
 python -m glassbox.induction
 python -m glassbox.guard
 
+# follow-ups: larger SAEs in the microscope, and which internal signal the name guard should read
+for k in 16 32; do python -m glassbox.export sae --sae runs/sae_k$k/sae.pt --out web/model/sae_k$k &&   python -m glassbox.features --sae-dir web/model/sae_k$k --results-name sae_features_k$k; done
+python -m glassbox.eval.sae_index
+python -m glassbox.guard_layers    # may move the page's guard (web/model/guard.json) to another SAE
+
 # README results table, and the demo GIF (needs Chrome and Pillow, and the site served on port 8765)
 python -m glassbox.eval.summary
 node docs/demo/frames.mjs http://127.0.0.1:8765/ docs/demo/frames && python docs/demo/make_gif.py docs/demo/frames docs/demo.gif
@@ -119,13 +125,13 @@ checks that this README matches `results/`, and deploys `web/` to GitHub Pages.
 ```
 python/glassbox/
   tokenizer.py   data.py   model.py   train.py   sample.py   export.py
-  sae.py         features.py   steer.py   attribution.py   induction.py   guard.py
-  eval/          lm_eval, web_parity, sae_eval, summary
+  sae.py         features.py   steer.py   attribution.py   induction.py   guard.py   guard_layers.py
+  eval/          lm_eval, web_parity, sae_eval, sae_index, summary
 web/
   index.html  microscope.html  replay.html
   engine/        tokenizer, model (KV cache, hooks), SAE, sampling, generation, attribution, guard
   ui/            page logic and styles
-  model/         exported weights, tokenizer, SAE, feature data, replay data, guard
+  model/         exported weights, tokenizer, SAEs (sae, sae_k16, sae_k32), feature data, replay data, guard
   test/          JS unit tests;  tools/  Node bridge for the parity tests
 tests/           pytest suite
 results/         script-generated reports

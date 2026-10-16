@@ -433,13 +433,13 @@
   },
   "sae_layer": 2,
   "seed": 0,
-  "seconds": 218.2,
+  "seconds": 313.2,
   "latency": {
     "runtime": "node v24.15.0",
     "tokens": 200,
-    "base_ms": 4.628599999999997,
+    "base_ms": 5.080667000000001,
     "added_ms": {
-      "SAE guard + word check": 0.7408205000000043
+      "SAE guard + word check": 0.6490520000000037
     }
   }
 }

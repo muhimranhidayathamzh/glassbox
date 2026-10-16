@@ -1,0 +1,505 @@
+{
+  "fit_stories": 1000,
+  "selection_stories": 500,
+  "test_stories": 1500,
+  "pool_a": [
+    "Aiko",
+    "Chidi",
+    "Emeka",
+    "Gita",
+    "Jabari",
+    "Mateo",
+    "Priya",
+    "Sakura",
+    "Uma",
+    "Wulan",
+    "Budi",
+    "Dimas",
+    "Gilang",
+    "Joko",
+    "Lestari",
+    "Putri",
+    "Teguh",
+    "Anjali",
+    "Dalia",
+    "Hamza",
+    "Kofi",
+    "Noor",
+    "Quan",
+    "Thabo",
+    "Valentina",
+    "Zuri"
+  ],
+  "pool_b": [
+    "Bayu",
+    "Dewi",
+    "Farida",
+    "Imani",
+    "Kemal",
+    "Oluwa",
+    "Rania",
+    "Tariq",
+    "Vikram",
+    "Zainab",
+    "Citra",
+    "Fajar",
+    "Indah",
+    "Kirana",
+    "Nanda",
+    "Rizki",
+    "Yusuf",
+    "Bilal",
+    "Esra",
+    "Ines",
+    "Malik",
+    "Omar",
+    "Selin",
+    "Umar",
+    "Xiomara"
+  ],
+  "seed": 0,
+  "candidates": [
+    {
+      "name": "SAE features, k = 8 (sae)",
+      "input": "SAE layer 2",
+      "threshold": -1.3051183223724365,
+      "strict_threshold": -3.4702234268188477,
+      "selection": {
+        "precision": 0.42417840375586857,
+        "recall": 0.5342992312241277,
+        "f1": 0.47291285003925676,
+        "tp": 1807,
+        "fp": 2453,
+        "fn": 1575,
+        "false_blocks_per_1000_tokens": 26.993419459911525
+      },
+      "known": {
+        "precision": 0.44419150601123997,
+        "recall": 0.602760884255237,
+        "f1": 0.5114678899082569,
+        "tp": 6244,
+        "fp": 7813,
+        "fn": 4115,
+        "false_blocks_per_1000_tokens": 28.252081028111057
+      },
+      "regex_or_known": {
+        "precision": 0.5698019801980198,
+        "recall": 1.0,
+        "f1": 0.7259539577420372,
+        "tp": 10359,
+        "fp": 7821,
+        "fn": 0,
+        "false_blocks_per_1000_tokens": 28.281009307673948
+      },
+      "new": {
+        "precision": 0.41317949134638826,
+        "recall": 0.5001475361463559,
+        "f1": 0.4525229153688708,
+        "tp": 5085,
+        "fp": 7222,
+        "fn": 5082,
+        "false_blocks_per_1000_tokens": 26.521731147059363
+      },
+      "regex_or_new": {
+        "precision": 0.508931603613394,
+        "recall": 0.7369922297629586,
+        "f1": 0.6020891924467657,
+        "tp": 7493,
+        "fp": 7230,
+        "fn": 2674,
+        "false_blocks_per_1000_tokens": 26.551109968601384
+      },
+      "dir": "sae",
+      "k": 8,
+      "bias": -3.4702234268188477
+    },
+    {
+      "name": "SAE features, k = 16 (sae_k16)",
+      "input": "SAE layer 2",
+      "threshold": -1.4121301174163818,
+      "strict_threshold": -3.1985549926757812,
+      "selection": {
+        "precision": 0.43969245555021624,
+        "recall": 0.5410999408633944,
+        "f1": 0.485153764581124,
+        "tp": 1830,
+        "fp": 2332,
+        "fn": 1552,
+        "false_blocks_per_1000_tokens": 25.66190549552127
+      },
+      "known": {
+        "precision": 0.4337988104473752,
+        "recall": 0.6477459214209866,
+        "f1": 0.5196112595345955,
+        "tp": 6710,
+        "fp": 8758,
+        "fn": 3649,
+        "false_blocks_per_1000_tokens": 31.669234051477872
+      },
+      "regex_or_known": {
+        "precision": 0.5416470588235294,
+        "recall": 1.0,
+        "f1": 0.7026862026862026,
+        "tp": 10359,
+        "fp": 8766,
+        "fn": 0,
+        "false_blocks_per_1000_tokens": 31.698162331040766
+      },
+      "new": {
+        "precision": 0.43228668348264765,
+        "recall": 0.4888364315924068,
+        "f1": 0.45882570162481534,
+        "tp": 4970,
+        "fp": 6527,
+        "fn": 5197,
+        "false_blocks_per_1000_tokens": 23.969446025596298
+      },
+      "regex_or_new": {
+        "precision": 0.5326467853822499,
+        "recall": 0.7325661453722829,
+        "f1": 0.6168115942028985,
+        "tp": 7448,
+        "fp": 6535,
+        "fn": 2719,
+        "false_blocks_per_1000_tokens": 23.99882484713832
+      },
+      "dir": "sae_k16",
+      "k": 16,
+      "bias": -2.9640281200408936
+    },
+    {
+      "name": "SAE features, k = 32 (sae_k32)",
+      "input": "SAE layer 2",
+      "threshold": -1.438169240951538,
+      "strict_threshold": -3.2012126445770264,
+      "selection": {
+        "precision": 0.4439706230751007,
+        "recall": 0.5541099940863394,
+        "f1": 0.4929633039589636,
+        "tp": 1874,
+        "fp": 2347,
+        "fn": 1508,
+        "false_blocks_per_1000_tokens": 25.826969210115106
+      },
+      "known": {
+        "precision": 0.4323040380047506,
+        "recall": 0.6676320108118544,
+        "f1": 0.5247941723261372,
+        "tp": 6916,
+        "fp": 9082,
+        "fn": 3443,
+        "false_blocks_per_1000_tokens": 32.840829373775065
+      },
+      "regex_or_known": {
+        "precision": 0.5326237852845904,
+        "recall": 1.0,
+        "f1": 0.6950483091787439,
+        "tp": 10359,
+        "fp": 9090,
+        "fn": 0,
+        "false_blocks_per_1000_tokens": 32.86975765333796
+      },
+      "new": {
+        "precision": 0.4422241529105126,
+        "recall": 0.5006393233008753,
+        "f1": 0.4696221801909859,
+        "tp": 5090,
+        "fp": 6420,
+        "fn": 5077,
+        "false_blocks_per_1000_tokens": 23.576504287471767
+      },
+      "regex_or_new": {
+        "precision": 0.5409882890602685,
+        "recall": 0.7451558965279826,
+        "f1": 0.62686690662364,
+        "tp": 7576,
+        "fp": 6428,
+        "fn": 2591,
+        "false_blocks_per_1000_tokens": 23.60588310901379
+      },
+      "dir": "sae_k32",
+      "k": 32,
+      "bias": -2.599076509475708
+    },
+    {
+      "name": "residual stream, layer 0",
+      "input": "raw residual",
+      "threshold": -1.4186697006225586,
+      "strict_threshold": -3.345036029815674,
+      "selection": {
+        "precision": 0.36628967530098505,
+        "recall": 0.29686575990538144,
+        "f1": 0.3279438183896783,
+        "tp": 1004,
+        "fp": 1737,
+        "fn": 2378,
+        "false_blocks_per_1000_tokens": 19.114378149965887
+      },
+      "known": {
+        "precision": 0.38362760834670945,
+        "recall": 0.3230041509798243,
+        "f1": 0.3507153713117761,
+        "tp": 3346,
+        "fp": 5376,
+        "fn": 7013,
+        "false_blocks_per_1000_tokens": 19.439803866264562
+      },
+      "regex_or_known": {
+        "precision": 0.6580067331512418,
+        "recall": 1.0,
+        "f1": 0.7937322810512605,
+        "tp": 10359,
+        "fp": 5384,
+        "fn": 0,
+        "false_blocks_per_1000_tokens": 19.468732145827456
+      },
+      "new": {
+        "precision": 0.3570155637400499,
+        "recall": 0.2955640798662339,
+        "f1": 0.32339647008179073,
+        "tp": 3005,
+        "fp": 5412,
+        "fn": 7162,
+        "false_blocks_per_1000_tokens": 19.874772773177135
+      },
+      "regex_or_new": {
+        "precision": 0.5675416899385622,
+        "recall": 0.6996164060194747,
+        "f1": 0.6266960352422908,
+        "tp": 7113,
+        "fp": 5420,
+        "fn": 3054,
+        "false_blocks_per_1000_tokens": 19.904151594719156
+      }
+    },
+    {
+      "name": "residual stream, layer 1",
+      "input": "raw residual",
+      "threshold": -1.3590455055236816,
+      "strict_threshold": -3.1865079402923584,
+      "selection": {
+        "precision": 0.38268032056990203,
+        "recall": 0.5082791247782378,
+        "f1": 0.43662687325374655,
+        "tp": 1719,
+        "fp": 2773,
+        "fn": 1663,
+        "false_blocks_per_1000_tokens": 30.514778704579967
+      },
+      "known": {
+        "precision": 0.40418623929262226,
+        "recall": 0.564822859349358,
+        "f1": 0.471189853029998,
+        "tp": 5851,
+        "fp": 8625,
+        "fn": 4508,
+        "false_blocks_per_1000_tokens": 31.188301403744767
+      },
+      "regex_or_known": {
+        "precision": 0.5454689063240482,
+        "recall": 1.0,
+        "f1": 0.7058943781942077,
+        "tp": 10359,
+        "fp": 8632,
+        "fn": 0,
+        "false_blocks_per_1000_tokens": 31.213613648362298
+      },
+      "new": {
+        "precision": 0.3744651589242054,
+        "recall": 0.48204976886003736,
+        "f1": 0.4215007525263384,
+        "tp": 4901,
+        "fp": 8187,
+        "fn": 5266,
+        "false_blocks_per_1000_tokens": 30.065551495565636
+      },
+      "regex_or_new": {
+        "precision": 0.4818842870692381,
+        "recall": 0.7495819809186584,
+        "f1": 0.5866369024709414,
+        "tp": 7621,
+        "fp": 8194,
+        "fn": 2546,
+        "false_blocks_per_1000_tokens": 30.091257964414904
+      }
+    },
+    {
+      "name": "residual stream, layer 2",
+      "input": "raw residual",
+      "threshold": -1.5479297637939453,
+      "strict_threshold": -3.3457565307617188,
+      "selection": {
+        "precision": 0.42072382593709606,
+        "recall": 0.5774689532820816,
+        "f1": 0.48678963110668,
+        "tp": 1953,
+        "fp": 2689,
+        "fn": 1429,
+        "false_blocks_per_1000_tokens": 29.5904219028545
+      },
+      "known": {
+        "precision": 0.40193247445579744,
+        "recall": 0.6987160922869002,
+        "f1": 0.5103112771882822,
+        "tp": 7238,
+        "fp": 10770,
+        "fn": 3121,
+        "false_blocks_per_1000_tokens": 38.94469636154564
+      },
+      "regex_or_known": {
+        "precision": 0.4901116578349735,
+        "recall": 1.0,
+        "f1": 0.6578187013811716,
+        "tp": 10359,
+        "fp": 10777,
+        "fn": 0,
+        "false_blocks_per_1000_tokens": 38.97000860616317
+      },
+      "new": {
+        "precision": 0.41960530572630217,
+        "recall": 0.510278351529458,
+        "f1": 0.46052105987306374,
+        "tp": 5188,
+        "fp": 7176,
+        "fn": 4979,
+        "false_blocks_per_1000_tokens": 26.352802923192744
+      },
+      "regex_or_new": {
+        "precision": 0.5123226288274833,
+        "recall": 0.7422051736008656,
+        "f1": 0.6062017994858612,
+        "tp": 7546,
+        "fp": 7183,
+        "fn": 2621,
+        "false_blocks_per_1000_tokens": 26.378509392042012
+      }
+    },
+    {
+      "name": "residual stream, layer 3",
+      "input": "raw residual",
+      "threshold": -2.7230920791625977,
+      "strict_threshold": -4.507674694061279,
+      "selection": {
+        "precision": 0.3959218351741716,
+        "recall": 0.5511531638083974,
+        "f1": 0.4608158220024722,
+        "tp": 1864,
+        "fp": 2844,
+        "fn": 1518,
+        "false_blocks_per_1000_tokens": 31.29608028699078
+      },
+      "known": {
+        "precision": 0.30026792549119674,
+        "recall": 0.9087749782797567,
+        "f1": 0.4513917192107598,
+        "tp": 9414,
+        "fp": 21938,
+        "fn": 945,
+        "false_blocks_per_1000_tokens": 79.32857463134523
+      },
+      "regex_or_known": {
+        "precision": 0.3206624361553939,
+        "recall": 1.0,
+        "f1": 0.4856084755297206,
+        "tp": 10359,
+        "fp": 21946,
+        "fn": 0,
+        "false_blocks_per_1000_tokens": 79.35750291090812
+      },
+      "new": {
+        "precision": 0.394583236049498,
+        "recall": 0.4986721746827973,
+        "f1": 0.440563086548488,
+        "tp": 5070,
+        "fp": 7779,
+        "fn": 5097,
+        "false_blocks_per_1000_tokens": 28.567231596922568
+      },
+      "regex_or_new": {
+        "precision": 0.4799625968474486,
+        "recall": 0.7067964984754598,
+        "f1": 0.5717013405465611,
+        "tp": 7186,
+        "fp": 7786,
+        "fn": 2981,
+        "false_blocks_per_1000_tokens": 28.592938065771836
+      }
+    },
+    {
+      "name": "residual stream, layer 4",
+      "input": "raw residual",
+      "threshold": -1.8419532775878906,
+      "strict_threshold": -4.231319427490234,
+      "selection": {
+        "precision": 0.45324675324675323,
+        "recall": 0.4127735068007096,
+        "f1": 0.4320643763540699,
+        "tp": 1396,
+        "fp": 1684,
+        "fn": 1986,
+        "false_blocks_per_1000_tokens": 18.531153025067677
+      },
+      "known": {
+        "precision": 0.4196665108306062,
+        "recall": 0.7799015348971908,
+        "f1": 0.5456940222897669,
+        "tp": 8079,
+        "fp": 11172,
+        "fn": 2280,
+        "false_blocks_per_1000_tokens": 40.39834240958105
+      },
+      "regex_or_known": {
+        "precision": 0.4809415478898742,
+        "recall": 1.0,
+        "f1": 0.649507806132046,
+        "tp": 10359,
+        "fp": 11180,
+        "fn": 0,
+        "false_blocks_per_1000_tokens": 40.42727068914394
+      },
+      "new": {
+        "precision": 0.4300672430355427,
+        "recall": 0.44034621815678177,
+        "f1": 0.43514603683724545,
+        "tp": 4477,
+        "fp": 5933,
+        "fn": 5690,
+        "false_blocks_per_1000_tokens": 21.788068526101245
+      },
+      "regex_or_new": {
+        "precision": 0.5345138290370602,
+        "recall": 0.6709943936264384,
+        "f1": 0.5950283471434801,
+        "tp": 6822,
+        "fp": 5941,
+        "fn": 3345,
+        "false_blocks_per_1000_tokens": 21.817447347643267
+      }
+    }
+  ],
+  "regex": {
+    "known": {
+      "precision": 0.9992283206327771,
+      "recall": 1.0,
+      "f1": 0.9996140113866641,
+      "tp": 10359,
+      "fp": 8,
+      "fn": 0,
+      "false_blocks_per_1000_tokens": 0.028928279562893695
+    },
+    "new": {
+      "precision": 0.9984959578868209,
+      "recall": 0.5223763155306383,
+      "f1": 0.6859098540617332,
+      "tp": 5311,
+      "fp": 8,
+      "fn": 4856,
+      "false_blocks_per_1000_tokens": 0.029378821542020896
+    }
+  },
+  "selected": "SAE features, k = 32 (sae_k32)",
+  "switch": true,
+  "decision": "the guard switches to SAE features, k = 32 (sae_k32) (selection F1 0.493 vs 0.473).",
+  "best_residual": "residual stream, layer 2",
+  "seconds": 608.4
+}
