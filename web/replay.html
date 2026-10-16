@@ -21,17 +21,24 @@
   <header>
     <nav class="nav"><a href="index.html">Generate</a><a href="microscope.html">Microscope</a><a href="replay.html" aria-current="page">Replay</a><a href="case-study.html">Case study</a></nav>
     <h1>Training replay</h1>
-    <p class="lede">The model was saved at <span id="n-ckpt">&hellip;</span> moments during training, spaced
-      logarithmically. Slide through them to see the loss fall, the attention heads change, and the stories improve.</p>
+    <p class="lede">The model was saved <span id="n-ckpt">&hellip;</span> times while it was learning, more often at
+      the start, when it changes fastest. Press Play, or drag the slider, to watch it go from repeating one word to
+      writing simple stories.</p>
   </header>
 
   <main class="viz-root">
     <section class="panel">
-      <label for="ckpt" class="field-label">Checkpoint</label>
+      <div class="replay-head">
+        <label for="ckpt" class="field-label">Checkpoint</label>
+        <button type="button" id="play" class="primary">&#9654; Play training</button>
+      </div>
       <input type="range" id="ckpt" min="0" max="0" step="1" value="0">
       <p id="ckpt-label" class="hint"></p>
+      <h3>What the model writes at this point</h3>
+      <p id="ckpt-story" class="story-sample" aria-live="polite"></p>
+      <p class="hint">Its most likely continuation of a fixed prompt, computed from the saved checkpoint.</p>
       <div class="tiles">
-        <div class="tile"><span class="tile-label">Validation loss</span><span class="tile-value" id="t-val"></span></div>
+        <div class="tile"><span class="tile-label">Validation loss</span><span class="tile-value" id="t-val"></span><span class="tile-note">lower = better at predicting the next word</span></div>
         <div class="tile"><span class="tile-label">Best induction score</span><span class="tile-value" id="t-ind"></span><span class="tile-note" id="t-ind-head"></span></div>
         <div class="tile"><span class="tile-label">Best previous-token score</span><span class="tile-value" id="t-prev"></span><span class="tile-note" id="t-prev-head"></span></div>
         <div class="tile"><span class="tile-label">Copy test: loss on 1st &rarr; 2nd copy</span><span class="tile-value" id="t-copy"></span></div>

@@ -310,6 +310,21 @@ async function renderCircuit() {
     `computed in ${((performance.now() - t0) / 1000).toFixed(2)} s.`;
 }
 
+/** The button in "How to use it": select the first " Lily" in the text and show its circuit graph. */
+function showLily() {
+  let pos = analysis.ids.findIndex((id, i) => i > 0 && tokenizer.tokenStr(id) === " Lily");
+  if (pos < 0) {
+    $("text").value = DEFAULT_TEXT;
+    analyze();
+    pos = analysis.ids.findIndex((id, i) => i > 0 && tokenizer.tokenStr(id) === " Lily");
+  }
+  selectedPos = pos;
+  renderTokens();
+  renderActive();
+  renderCircuit();
+  $("circuit").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function selectFeature(f) {
   selectedFeature = f;
   renderTokens();
@@ -370,6 +385,7 @@ async function init() {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) analyze();
   });
   $("search").addEventListener("input", renderSearch);
+  $("try-lily").addEventListener("click", showLily);
   $("tokens").addEventListener("click", (e) => {
     const pos = e.target.dataset?.pos;
     if (pos === undefined) return;
@@ -412,6 +428,7 @@ async function init() {
     $("progress").hidden = true;
     $("analyze").disabled = false;
     $("analyze").textContent = "Analyze";
+    $("try-lily").disabled = false;
     if (params.has("text")) $("text").value = params.get("text");
     analyze();
     if (params.has("feature")) selectFeature(Number(params.get("feature")));

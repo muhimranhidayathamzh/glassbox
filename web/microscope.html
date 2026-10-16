@@ -21,14 +21,26 @@
   <header>
     <nav class="nav"><a href="index.html">Generate</a><a href="microscope.html" aria-current="page">Microscope</a><a href="replay.html">Replay</a><a href="case-study.html">Case study</a></nav>
     <h1>Feature microscope</h1>
-    <p class="lede">A sparse autoencoder (SAE) splits the model's internal state at one layer into
-      <span id="n-features">&hellip;</span> features. Type any text, click a token, and see which features fire on it.
-      Everything runs in your browser.</p>
+    <p class="lede">Inside the model, every word becomes a long list of numbers that nobody can read. A sparse
+      autoencoder (SAE) translates them into <span id="n-features">&hellip;</span> <em>features</em>: small concepts the
+      model has learned, such as &ldquo;the word ball&rdquo; or &ldquo;right after the word named&rdquo;. Everything runs
+      in your browser.</p>
   </header>
 
   <main>
+    <section class="panel intro" aria-labelledby="how-title">
+      <h2 id="how-title">How to use it</h2>
+      <ol class="steps">
+        <li><b>Click a word</b> in the analyzed text below. You see the features active on it and a graph of
+          <em>why</em> the model wrote that word.</li>
+        <li><b>Click a feature</b> to see where else it fires, in thousands of real stories.</li>
+        <li><b>Type your own text</b> and press Analyze, or search for a feature by word.</li>
+      </ol>
+      <button type="button" id="try-lily" class="primary" disabled>Show me: why did it write &ldquo;Lily&rdquo;?</button>
+    </section>
+
     <section class="panel">
-      <label for="text" class="field-label">Text under the microscope</label>
+      <label for="text" class="field-label">Text under the microscope (a story is already loaded)</label>
       <textarea id="text" rows="4" spellcheck="false"></textarea>
       <div class="actions">
         <button id="analyze" class="primary" disabled>Loading&hellip;</button>

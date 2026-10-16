@@ -21,16 +21,37 @@
   <header>
     <nav class="nav"><a href="index.html" aria-current="page">Generate</a><a href="microscope.html">Microscope</a><a href="replay.html">Replay</a><a href="case-study.html">Case study</a></nav>
     <h1>Glassbox</h1>
-    <p class="lede">A small language model (<span id="param-count">&hellip;</span> parameters), built from scratch and
-      running entirely in your browser. No server, no API key.</p>
+    <p class="lede">A tiny AI that writes children's stories (<span id="param-count">&hellip;</span> parameters), built
+      from scratch, with tools to see what it is thinking. It runs entirely in your browser: no server, no API key.</p>
   </header>
 
   <main>
+    <section class="panel intro" aria-labelledby="try-title">
+      <h2 id="try-title">Try it in one click</h2>
+      <div class="try-grid">
+        <button type="button" class="try" data-try="story" disabled><b>Write a story</b>
+          <span>The model continues &ldquo;Once upon a time&rdquo;, one piece of a word at a time.</span></button>
+        <button type="button" class="try" data-try="steer" disabled><b>Make it about cats</b>
+          <span>Switch on the model's own &ldquo;cat&rdquo; concept while it writes.</span></button>
+        <button type="button" class="try" data-try="guard" disabled><b>Hide the names</b>
+          <span>A guard reads the model's internal state and hides each name before it appears.</span></button>
+      </div>
+      <p class="hint">It is not a chatbot: it has only read simple stories for young children, and it continues
+        whatever you write. Next, open the <a href="microscope.html">Microscope</a> to see why it wrote a word, or the
+        <a href="replay.html">Replay</a> to watch it learn.</p>
+    </section>
+
     <section class="panel controls">
-      <label for="prompt" class="field-label">Start of a story</label>
+      <label for="prompt" class="field-label">Or write the start of your own story</label>
       <textarea id="prompt" rows="3" spellcheck="false">Once upon a time</textarea>
       <div class="chips" id="examples" aria-label="Example prompts"></div>
 
+      <details class="steer" id="sampling-panel">
+        <summary>Sampling settings</summary>
+        <p class="hint">How the next word is picked. <b>Temperature</b>: higher means more surprising choices; 0 always
+          takes the most likely word. <b>Top-k</b>: choose only among the k most likely words (0 = no limit).
+          <b>Max new tokens</b>: how long the story may get. <b>Seed</b>: the same seed and settings always give the
+          same story.</p>
       <div class="sliders">
         <label>Temperature <output id="temperature-out"></output>
           <input type="range" id="temperature" min="0" max="1.5" step="0.05" value="0.8">
@@ -48,13 +69,15 @@
           </span>
         </label>
       </div>
+      </details>
 
       <details class="steer" id="steer-panel">
-        <summary>Steering (experimental)</summary>
-        <p class="hint">Push the story toward a concept: while the model writes, the direction of one sparse
-          autoencoder feature is added to its internal state (the residual stream at layer
-          <span id="steer-layer">2</span>). Strength 1 adds a vector as large as a typical internal state; large
-          values break the text. Measured effects: <code>results/steering.md</code>.</p>
+        <summary>Steering: push the story toward a concept</summary>
+        <p class="hint">The <a href="microscope.html">microscope</a> found concepts inside the model, such as one that
+          fires on the word &ldquo;cat&rdquo;. While the model writes, the chosen concept is switched on artificially
+          (its direction is added to the model's internal state at layer <span id="steer-layer">2</span>).
+          Strength 0.5 is a good start; much higher and the text falls apart.
+          <a href="https://github.com/muhimranhidayathamzh/glassbox/blob/main/results/steering.md">How this was measured against random directions</a>.</p>
         <div class="sliders">
           <label>Concept
             <select id="steer-feature"><option value="">off</option></select>
@@ -66,11 +89,13 @@
       </details>
 
       <details class="steer" id="guard-panel">
-        <summary>Name guard</summary>
-        <p class="hint">Hide names before they are shown. Before each token is chosen, a classifier reads the
-          model's sparse-autoencoder features and predicts whether a name comes next; once a word is complete, an
-          optional word check also hides known names and capitalized words in mid-sentence. Hover a hidden word
-          to see why. Measured precision, recall and cost: <code>results/guard.md</code>.</p>
+        <summary>Name guard: hide names before they appear</summary>
+        <p class="hint">Before each word is chosen, the guard reads the model's internal concepts and predicts
+          whether a name is coming; if so, that word is hidden. Once a word is finished, a simple word check also
+          hides known names and capitalized words in mid-sentence. It also hides some ordinary words, mostly at the
+          start of a sentence, where a name could have come next. Hover or tap a hidden word to see why.
+          <i>Balanced</i> makes fewer mistakes; <i>strict</i> catches more names but hides more ordinary words.
+          <a href="https://github.com/muhimranhidayathamzh/glassbox/blob/main/results/guard.md">How well it works, compared with a regex</a>.</p>
         <div class="sliders">
           <label>Mode
             <select id="guard-mode">
@@ -86,25 +111,26 @@
       <div class="actions">
         <button id="generate" class="primary" disabled>Loading model&hellip;</button>
         <button id="stop" hidden>Stop</button>
-        <label class="toggle"><input type="checkbox" id="show-tokens"> Show tokens</label>
+        <label class="toggle"><input type="checkbox" id="show-tokens"> Show how surprised the model was</label>
       </div>
       <progress id="progress" max="1" value="0"></progress>
       <p id="status" role="status"></p>
     </section>
 
     <section class="panel">
-      <div id="output" class="story" aria-live="polite"></div>
+      <div id="output" class="story" aria-live="polite"
+        data-placeholder="Your story will appear here. Pick one of the buttons above, or press Generate."></div>
       <p id="stats"></p>
-      <p class="legend">With <em>Show tokens</em> on, each token is outlined and shaded by how surprising it was to the
-        model (darker = less likely). Hover or tap a token to see its probability and the alternatives.</p>
+      <p class="legend">With <em>Show how surprised the model was</em> on, each token (a word or piece of a word) is
+        outlined and shaded by how unexpected it was to the model (darker = less likely). Hover or tap a token to see
+        its probability and the words the model almost chose.</p>
     </section>
 
     <section class="notes">
       <p>The model was trained on <a href="https://huggingface.co/datasets/roneneldan/TinyStories">TinyStories</a>
         (simple English stories for young children, license CDLA-Sharing-1.0), so that is the only kind of text it
         knows. It is not a chatbot: it continues whatever you write.</p>
-      <p>Temperature 0 always picks the most likely token. Top-k 0 means no top-k filter. The same seed and settings
-        always give the same story.</p>
+      <p>How it was built and what was measured: <a href="case-study.html">the case study</a>.</p>
     </section>
   </main>
 

@@ -27,8 +27,9 @@ numbers were kept honest.
 
 The browser pages:
 
-- **Generate**: write a story; *Steering* pushes it toward a concept with an SAE feature; *Name guard*
-  hides names and shows why each word was hidden.
+- **Generate**: one-click examples (a plain story, a story steered toward "cat", names hidden), or write
+  your own; *Steering* pushes it toward a concept with an SAE feature; *Name guard* hides names and shows
+  why each word was hidden.
 - **Microscope**: type text, click a token to see the active features and a circuit graph of the
   features that led the model to write it (computed by ablation in the browser). Switch between
   sparse autoencoders with k = 8, 16 or 32 active features per token.

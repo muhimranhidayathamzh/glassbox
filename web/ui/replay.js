@@ -7,6 +7,8 @@ let data = null;
 let idx = 0;
 let metric = "prefix";
 let head = [0, 0];
+let playTimer = null;
+let sharedPrompt = ""; // the fixed prompt: the text every checkpoint's first sample starts with
 
 function el(tag, attrs = {}, text) {
   const node = document.createElementNS(SVG, tag);
@@ -271,6 +273,15 @@ function drawTiles() {
   $("t-prev").textContent = fmt(maxOf(c.prev));
   $("t-prev-head").textContent = `head L${bp[0]}.H${bp[1]}`;
   $("t-copy").textContent = `${c.repeat_loss_first.toFixed(2)} → ${c.repeat_loss_second.toFixed(2)}`;
+  const story = c.samples[0];
+  const prompt = sharedPrompt;
+  $("ckpt-story").replaceChildren();
+  if (prompt && story.startsWith(prompt)) {
+    $("ckpt-story").append(Object.assign(document.createElement("span"), { className: "prompt", textContent: prompt }),
+                           story.slice(prompt.length));
+  } else {
+    $("ckpt-story").textContent = story;
+  }
   const list = $("samples");
   list.replaceChildren();
   for (const s of c.samples) list.append(Object.assign(document.createElement("li"), { textContent: s }));
@@ -316,6 +327,26 @@ function select(i) {
   drawPattern();
 }
 
+/** Step through the checkpoints from the first (or the current one) to the last. */
+function togglePlay() {
+  if (playTimer !== null) {
+    stopPlay();
+    return;
+  }
+  if (idx >= data.checkpoints.length - 1) select(0);
+  $("play").textContent = "❚❚ Pause";
+  playTimer = setInterval(() => {
+    if (idx >= data.checkpoints.length - 1) stopPlay();
+    else select(idx + 1);
+  }, 900);
+}
+
+function stopPlay() {
+  clearInterval(playTimer);
+  playTimer = null;
+  $("play").textContent = "▶ Play training";
+}
+
 async function init() {
   try {
     const res = await fetch(new URL("../model/replay.json", import.meta.url));
@@ -327,9 +358,18 @@ async function init() {
     return;
   }
   $("n-ckpt").textContent = String(data.checkpoints.length);
+  sharedPrompt = data.checkpoints.map((c) => c.samples[0]).reduce((a, b) => {
+    let i = 0;
+    while (i < a.length && a[i] === b[i]) i++;
+    return a.slice(0, i);
+  });
   $("ckpt").max = String(data.checkpoints.length - 1);
   head = argmaxOf(data.checkpoints.at(-1).prefix);
-  $("ckpt").addEventListener("input", (e) => select(Number(e.target.value)));
+  $("ckpt").addEventListener("input", (e) => {
+    stopPlay();
+    select(Number(e.target.value));
+  });
+  $("play").addEventListener("click", togglePlay);
   for (const [id, m] of [["m-prefix", "prefix"], ["m-prev", "prev"]]) {
     $(id).addEventListener("click", () => {
       metric = m;
@@ -341,7 +381,8 @@ async function init() {
   const params = new URLSearchParams(location.search);
   verdict();
   drawTable();
-  select(params.has("ckpt") ? Math.min(Number(params.get("ckpt")), data.checkpoints.length - 1) : data.checkpoints.length - 1);
+  // first visit: start untrained, so Play shows the whole story; ?ckpt=N opens a given checkpoint
+  select(params.has("ckpt") ? Math.min(Number(params.get("ckpt")), data.checkpoints.length - 1) : 0);
   let pending = 0;
   window.addEventListener("resize", () => {
     cancelAnimationFrame(pending);

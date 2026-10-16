@@ -265,6 +265,34 @@ async function generate() {
   }
 }
 
+/** The one-click examples at the top: a plain story, a story steered toward "cat", or the name guard. */
+async function tryExample(kind) {
+  if (running || !engine) return;
+  $("prompt").value = "Once upon a time";
+  $("seed").value = String(Math.floor(Math.random() * 1e6)); // a new story on every click
+  $("steer-feature").value = "";
+  $("guard-mode").value = "off";
+  try {
+    if (kind === "steer") {
+      $("steer-panel").open = true;
+      const { steering } = await ensureSAE();
+      const preset = steering.presets.find((p) => p.word === "cat") ?? steering.presets[0];
+      $("steer-feature").value = String(preset.feature);
+      $("steer-alpha").value = "0.5";
+      $("steer-alpha").dispatchEvent(new Event("input"));
+    } else if (kind === "guard") {
+      $("guard-panel").open = true;
+      $("guard-mode").value = "balanced";
+      $("guard-word").checked = true;
+    }
+  } catch (err) {
+    setStatus(`Could not load this example: ${err.message}`, true);
+    return;
+  }
+  $("output").closest(".panel").scrollIntoView({ behavior: "smooth", block: "start" });
+  await generate();
+}
+
 /** ?selftest: greedy-decode a fixed prompt and print the ids, for automated browser checks. */
 function selftest() {
   const { model, tokenizer } = engine;
@@ -285,6 +313,9 @@ async function init() {
   $("prompt").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) generate();
   });
+  for (const btn of document.querySelectorAll("[data-try]")) {
+    btn.addEventListener("click", () => tryExample(btn.dataset.try));
+  }
   for (const text of EXAMPLES) {
     const chip = document.createElement("button");
     chip.type = "button";
@@ -303,6 +334,7 @@ async function init() {
   if (params.has("prompt")) $("prompt").value = params.get("prompt");
   if (params.has("alpha")) params.set("steer-alpha", params.get("alpha"));
   for (const id of ["temperature", "topk", "maxtok", "seed", "steer-alpha"]) {
+    if (params.has(id) && id !== "steer-alpha") $("sampling-panel").open = true;
     if (params.has(id)) {
       $(id).value = params.get(id);
       $(id).dispatchEvent(new Event("input"));
@@ -330,6 +362,7 @@ async function init() {
     );
     $("generate").disabled = false;
     $("generate").textContent = "Generate";
+    for (const btn of document.querySelectorAll("[data-try]")) btn.disabled = false;
     if (selftestMode) selftest();
     $("steer-panel").addEventListener("toggle", () => {
       if ($("steer-panel").open) ensureSAE().catch((err) => setStatus(`Steering unavailable: ${err.message}`, true));
